@@ -1,0 +1,167 @@
+%=======================================================================
+%  CHAPTER 3 -- BACKGROUND
+%=======================================================================
+\chapter{Formal Preliminaries}
+\label{ch:background}
+
+This chapter states the formalisms the detector is built on, and only those. It defines the structural causal model used to describe a multivariate time series, lists the assumptions under which the structure of such a model can be recovered from observation alone, and sets out the three discovery algorithms the evaluation compares. How those pieces are wired into a detector is the subject of Chapter~\ref{ch:methodology}; what they achieve on data is the subject of Chapter~\ref{ch:results}. The formalism is stated on its own terms and depends on neither. Where one of its assumptions is contradicted by a system this thesis actually runs on, though, the contradiction is recorded in this chapter and not left to a later one, because an assumption that fails on the evaluation data is a fact about this study and not a remark about the literature.
+
+\section{Structural Causal Models in Time Series}
+\label{sec:bg-scm}
+
+\subsection{The model}
+
+The theoretical foundation of the pipeline is the structural causal model \cite{pearl2009causality, peters2017elements}. For a multivariate time series $X$ with $d$ component series, the state of a variable $X^j$ at time $t$ is given by an assignment
+\[
+  X_t^j = f_j\!\left(\mathcal{P}(X_t^j),\, \varepsilon_t^j\right),
+\]
+where $\mathcal{P}(X_t^j)$ is the set of causal parents of $X^j$, each a variable $X_{t-\tau}^i$ for some lag $\tau \ge 0$, and the noise terms $\varepsilon_t^j$ are jointly independent. The assignment is not an equation to be rearranged. It says that the value on the left is produced by the values on the right, so the two sides are not interchangeable and reversing one is a different model rather than the same one rewritten.
+
+Allowing $\tau = 0$ is a substantive choice and not a formality. A relation between two sensors sampled at a rate slower than the physics coupling them appears in the record as a simultaneous one, and a definition confined to $\tau \ge 1$ would exclude it by construction. Nothing in the pipeline forbids a contemporaneous parent; which lags a given algorithm can actually reach is a property of that algorithm, and is taken up below.
+
+Two graphs describe such a model, and they must be kept apart. The full-time graph has one node per variable per timestep and an edge $X^i_{t-\tau} \to X^j_t$ for every parent relation. It is infinite. The summary graph collapses the time index, drawing $X^i \to X^j$ whenever an edge exists at any lag, which makes it finite and readable at the cost of losing the lag. Under a stationarity assumption the full-time graph repeats, so a finite window of it determines the whole.
+
+This thesis uses the framework strictly for its observational factorisation. No interventional quantity is estimated and no do-calculus is invoked. Identifying the parent set $\mathcal{P}(X_t^j)$ allows a detector to approximate the mechanism $f_j$ by regressing the target on its direct causes rather than on the full state vector, and a fault then shows up as drift in that approximated mechanism. No single variable need leave its normal range for the detector to see it. That is the whole of the use made of causality here. The commitment is deliberately a modest one.
+
+\subsection{Standing assumptions}
+\label{sec:bg-assumptions}
+
+Recovering $\mathcal{P}$ from observation alone is impossible without restrictions on how the distribution relates to the graph. Four assumptions are standard and each of the three algorithms below leans on some subset of them.
+
+The \emph{causal Markov condition} says that a variable is independent of its non-descendants given its parents. It is what licenses reading conditional independence off a graph. Without it the graph and the distribution are unrelated objects and no observational procedure connects them.
+
+\emph{Faithfulness} is the converse direction: every conditional independence holding in the distribution is entailed by the graph. It rules out cancellation, where two causal paths of opposite sign sum to zero and a genuine dependence is invisible to any test. Faithfulness cannot be checked on data. It fails on a set of parameter values of measure zero, which sounds reassuring until one notices that engineered systems are built to cancel, and a control loop holding a variable at setpoint is a cancellation by design. The Tennessee Eastman process is that case exactly. Its 52 variables carry the plant's process measurements together with the manipulated variables through which the control loops act on the valves, and two loops close around the reactor, so a regulatory controller doing its job absorbs a disturbance by moving a valve and holds the measurement near setpoint. The dependence between the two is then partly cancelled in the record. Faithfulness is not a background technicality on that domain. It is contradicted by the plant's design, and the contradiction is present in the data before any algorithm reads it.
+
+\emph{Causal sufficiency} requires every common cause of two measured variables to be measured. A latent driver violates it, and the symptom is a spurious edge between the two variables it drives. This is the assumption most often false in practice, since instrumenting a plant or a patient exhaustively is not an option. This pipeline then breaks it a second time, deliberately. Computational limits cap GES and CAM-UV at 35 variables on the robot, chosen by a label-blind variance filter, where PCMCI reads all 244. Any common cause that links two retained variables through a discarded one is latent by construction, and it is the cap and not the instrumentation that made it so. The robot's LED attack is the sharp case, since the filter excludes all 69 LED channels: the two algorithms scoring that fault hold no channel of the subsystem the fault was injected into. Chapter~\ref{ch:results} reports what they return anyway.
+
+\emph{Causal stationarity} requires the mechanisms $f_j$ and the lag structure to be constant over the window searched. It is what makes a finite sample informative about a repeating graph. A detector built on drift is, in a sense, an instrument for finding where this assumption stops holding; discovery, however, needs it to hold on the training window. The pipeline takes an explicit position on it rather than an implicit one. Its recursive least squares filter carries a forgetting factor $\lambda$, and $\lambda = 1$ asserts stationarity over the whole evaluation stream while any value below one relaxes it. Robotics runs at $0.995$ and the other two domains at $1.0$, so the assumption is held on two systems and loosened on the one whose operating point moves. Chapter~\ref{ch:methodology} gives the update those values enter.
+
+\subsection{Markov equivalence and the limits of observation}
+\label{sec:bg-equivalence}
+
+Two directed acyclic graphs are Markov equivalent when they entail the same set of conditional independencies. No test on observational data can separate them, because there is nothing to separate: they make identical claims about the distribution. The chain $A \to B \to C$, the chain $A \leftarrow B \leftarrow C$ and the fork $A \leftarrow B \to C$ all entail $A \perp C \mid B$ and nothing else, so all three are one equivalence class. The collider $A \to B \leftarrow C$ is not in that class, and this is the asymmetry that makes any orientation possible at all: a collider entails $A \perp C$ and $A \not\perp C \mid B$, which is a signature no other configuration produces.
+
+An equivalence class is written as a completed partially directed acyclic graph. Edges oriented in every member of the class appear directed; edges oriented one way in some members and the other way in others appear undirected. An undirected edge is therefore a statement about the data and not a shortcoming of the search. It says the adjacency is supported and the direction is not decidable from independencies alone. Downstream that silence has a price, because a regression cannot take an unoriented edge as a parent. The pipeline discards those edges instead of orienting them by convention, and on the electrocardiogram the discard removes 26.5 per cent of what the GES search found. That figure is not an indictment of the method. It is the cost of a method declining to guess, charged in the currency the detector runs on.
+
+There are two ways past that ceiling and the three algorithms below split along them. One is to bring in information the independence structure does not carry, which in time series means temporal order: a cause cannot follow its effect, so any edge at $\tau \ge 1$ is oriented by the clock. The other is to restrict the functional form of the mechanisms, which breaks the symmetry between a model and its reverse in the residuals rather than in the independencies. Both buy orientation. They buy it with different assumptions, and the assumptions are what a reader has to weigh. Which route is open here is worth settling now, because the answer is not the one the taxonomy implies. In this pipeline the edges land almost entirely at lag zero: 100.0\% of the parent slots PCMCI's regressions retain on Healthcare and on Robotics are contemporaneous, and 98.7\% are on Industrial. The clock therefore orients almost nothing, and what reads on paper as the constraint-based family's structural advantage over the other two is, on this data, very nearly unused.
+
+\section{Causal Discovery Mechanisms}
+\label{sec:bg-discovery}
+
+The pipeline constructs parent sets through three algorithmic paradigms, each resting on different statistical mechanics. Figure~\ref{fig:paradigms} places the three side by side, because the distinction between them is the reason the evaluation uses one representative from each rather than three variants of one idea: a finding that holds across all three is a property of causal discovery, and a finding that holds for only one is a property of that estimator.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{\textwidth}{!}{\input{figures/discovery_paradigms}}
+  \caption[What each discovery family uses to identify structure]{What each discovery family uses to identify structure. The three rest on incompatible assumptions about what makes a causal relation recoverable from observation alone: conditional independence after conditioning on the remaining variables, a penalised likelihood scored over Markov equivalence classes, and the functional form of the mechanism together with an independence test on the residuals.}
+  \label{fig:paradigms}
+\end{figure}
+
+Two properties are claimed for discovery algorithms and they are worth defining before they are used, since both are asymptotic and both are easy to overread. An algorithm is \emph{sound} when everything it outputs is true of the generating graph: an edge it draws is a real adjacency, an arrowhead it places is a real direction. It is \emph{complete} when it outputs everything that is decidable from the information it is given, so that anything it leaves undetermined is genuinely undetermined and not merely missed. Soundness without completeness describes a cautious method that reports less than it could. Completeness without soundness describes a method that commits to answers it cannot support. Both properties are stated in the limit of infinite data and a perfect conditional independence test or a perfectly consistent score, and neither transfers to a finite sample. What they license is a reading of the algorithm's design, and what the finite sample delivers is an estimate whose errors are of the kind the design permits.
+
+\subsection{Constraint-based discovery: PCMCI}
+\label{sec:bg-pcmci}
+
+PCMCI isolates causal links by testing conditional independence \cite{runge2019pcmci}. The test used throughout this thesis is linear partial correlation, and a property of partial correlation matters for a sensor pipeline: it is invariant to affine transformation. Discovery is therefore agnostic to the units, the scaling and the baseline offsets of the physical channels, and depends only on their conditional covariance structure.
+
+\paragraph{Mechanism.} The procedure runs in two stages, and the reason for the second is the problem the first leaves behind. The first stage, PC$_1$, is a condition-selection pass: for each target variable it starts from the full set of lagged candidates and iteratively removes those that become conditionally independent of the target given the candidates already retained, which leaves a reduced parent set for each variable. Running this per target is what keeps the method tractable, since the alternative is a test over every subset of the remaining variables.
+
+Condition selection alone would produce many false positives, because a test repeated across thousands of candidate links will reject the null by chance whatever the significance level. The second stage, the momentary conditional independence test, addresses this by conditioning each candidate link on the parents of both of its endpoints. Conditioning on the parents of the source as well as those of the target removes the autocorrelation in the driving variable, which is the dominant source of spurious links in time series and the reason a naive lagged correlation analysis reports structure where none exists.
+
+\paragraph{Assumptions.} PCMCI inherits the full constraint-based list: the causal Markov condition, faithfulness, causal sufficiency and causal stationarity over the searched window, together with a conditional independence test that is valid for the data at hand. The last is not a formality. With a partial correlation test the procedure is testing linear conditional independence, so a purely nonlinear dependence with zero partial correlation is invisible to it, and the guarantee below is a guarantee about a linear world. What the test yields on this data is visible in the stored effect sizes, which span $[-0.948, 0.954]$ on the healthcare recording and let the pipeline's sparsification rule discriminate among them, 149 of 564 candidate edges surviving it. Neither of the other two algorithms supplies a comparable quantity, and Chapter~\ref{ch:experimental_setup} sets out what follows from that asymmetry. One further assumption is specific to the lag structure. The consistency argument for PCMCI is stated for time-lagged links under the premise that contemporaneous causation is absent; where the search is extended to $\tau = 0$, the links returned at that lag are adjacencies whose orientation the procedure does not establish, and orienting them requires the additional machinery of PCMCI+ \cite{runge2020pcmciplus}.
+
+\paragraph{Soundness and completeness.} In the oracle limit, with a consistent independence test and the assumptions above holding, the constraint-based family is sound and complete for the Markov equivalence class \cite{spirtes2000causation}: the adjacencies recovered are exactly the true ones, and the orientations are exactly those that the independencies determine. In the lagged setting completeness is stronger than in the static one, because temporal order settles every direction the independencies leave open. The momentary conditional independence stage is not part of that guarantee; it is a false-discovery control layer on top of it, and it trades power for precision. The practical consequence is a method conservative in a specific direction: it is more likely to miss a real edge than to invent one.
+
+\paragraph{Advantages.} The test operates per target and per lag, so the search scales to wide systems where an exhaustive score comparison does not. Lags are handled natively, which means the output is already a temporal object and needs no external convention to become one. The conditional independence test is modular, so a nonlinear test can be substituted where the linear one is inadequate, and the affine invariance of partial correlation removes any need to calibrate across sensors of different physical units.
+
+\paragraph{Drawbacks.} The number of tests grows with the number of variables and with $\tau_{\max}$, and every additional test is another opportunity to reject the null by accident, which is why an uncorrected run over a wide system tends to over-link. With a linear test the method is blind to nonlinear dependence. Causal sufficiency is assumed and never checked, so a latent common driver is returned as a direct edge with no flag on it. And the false-discovery correction that would hold the error rate at its nominal level is optional, so a configuration that omits it operates at a higher effective rate than its significance threshold suggests.
+
+\subsection{Score-based discovery: GES}
+\label{sec:bg-ges}
+
+Greedy Equivalence Search searches the space of Markov equivalence classes directly, inserting and deleting edges to optimise a penalised likelihood \cite{chickering2002ges}. It scores whole structures rather than individual relations, which is a different epistemology from testing links one at a time.
+
+\paragraph{Mechanism.} The search proceeds in two phases. A forward phase inserts the single edge that most improves the score, repeating until no insertion improves it. A backward phase then deletes edges on the same criterion until no deletion improves it. The backward phase is what makes the procedure more than a greedy heuristic: forward search alone will overshoot, adding edges that were justified only in the presence of others it had not yet considered, and the deletion pass is what removes them.
+
+\paragraph{Assumptions.} GES requires the causal Markov condition, faithfulness and causal sufficiency, and in place of an independence test it requires a score that is \emph{locally consistent}: one that, in the large-sample limit, increases when an edge is added that removes a genuine dependence and decreases when an edge is added that does not. The Bayesian information criterion is locally consistent, and it is the score used here. It is also parametric. The usual formulation assumes a linear model with Gaussian errors, so its consistency is consistency within that family, and a nonlinear mechanism is scored by how well a linear model approximates it. On the electrocardiogram that assumption is rewarded for the wrong reason. Four of the twelve leads are exact linear functions of the others, and a score written for linear-Gaussian structure recovers an exact algebraic identity more readily than it recovers a biological mechanism. Removing those four leads drops GES from $0.8114$ to $0.7418$. Some of what the highest-scoring configuration in this study had found was Einthoven's algebra. The search also treats the observations as exchangeable: it has no representation of time, and an autocorrelated series violates the independent-sampling premise the likelihood is written under.
+
+\paragraph{Soundness and completeness.} Chickering's result is asymptotic consistency: given a locally consistent score, causal sufficiency and a distribution faithful to some directed acyclic graph, the two phases together recover the true Markov equivalence class in the large-sample limit \cite{chickering2002ges}. That is soundness and completeness at the level of the equivalence class, which is the most any observational method can deliver without restricting the function class. Within the class the method is deliberately silent, and the undirected edges in its output are that silence written down. The guarantee is asymptotic; the samples available in any real study are finite; and the greedy search itself has no finite-sample optimality claim, so a run can terminate at a local optimum that the score would not have chosen given more data.
+
+\paragraph{Advantages.} Scoring equivalence classes avoids the multiple-testing problem that dominates constraint-based search, because there is no sequence of hypothesis tests whose errors accumulate. The complexity penalty pushes towards sparse structures, and a sparse graph is the kind a downstream regression can actually use. The output is a single coherent structure rather than an edge list assembled from independent decisions, so it cannot contain the mutually inconsistent conclusions that separate tests sometimes produce.
+
+\paragraph{Drawbacks.} The search is greedy over a combinatorial space and its cost grows sharply with the number of variables, which places a practical ceiling on the systems it can be run on. The default score carries a linear-Gaussian assumption that is rarely stated when results are reported. There is no notion of lag anywhere in the method, so a temporal interpretation of its output has to be supplied from outside it. And the undirected edges, correct as they are, leave a downstream consumer with a decision the algorithm has declined to make.
+
+\subsection{Functional causal models: CAM-UV}
+\label{sec:bg-camuv}
+
+CAM-UV assumes a causal additive model with additive noise and recovers direction from the functional form of the mechanism rather than from the independence structure \cite{maeda2021camuv, buhlmann2014cam}. It is the only one of the three that does not assume causal sufficiency.
+
+\paragraph{Mechanism and the identifiability argument.} The identifiability argument is worth stating because it is what distinguishes this family from the other two. If every mechanism were linear and every noise term Gaussian, the joint distribution would be symmetric in a way that makes the two directions of a causal edge indistinguishable, and no amount of data would separate them. Assuming the mechanisms are nonlinear breaks that symmetry \cite{hoyer2008anm}: when the true model generates the effect as a nonlinear function of the cause plus independent noise, fitting the same form in the reverse direction leaves residuals that are dependent on the putative cause. The direction that yields independent residuals is the correct one, and the test for that independence is what the method spends its effort on. Residual independence is assessed with the Hilbert-Schmidt independence criterion~\cite{gretton2005hsic}, a kernel statistic that detects dependence of any form and not only linear correlation.
+
+Uniquely among the three, CAM-UV also reports pairs of variables it attributes to an unobserved common cause, returned as a set $U$ alongside the observed parent set $P$. The same residual machinery supports this: a pair whose dependence survives conditioning on the measured variables, and which admits no additive-noise model in either direction, is evidence of a driver that was never measured.
+
+\paragraph{Assumptions.} The mechanisms must be additive in the noise and nonlinear in the parents, the noise must be continuous and independent across variables, and the assumed model class must contain the true mechanism. Causal sufficiency is relaxed rather than assumed, which is the method's distinctive claim. Faithfulness in the constraint-based sense is not required, since orientation comes from the residuals; what replaces it is a requirement that the independence test have power against the dependences that actually arise. Like GES, the method has no representation of time.
+
+\paragraph{Soundness and completeness.} Within its model class the guarantee is stronger than anything the other two can offer, because the additive-noise restriction identifies the graph itself and not merely its equivalence class: the direction of a pair is decidable where the independence structure alone leaves it open. That strength is conditional in a way the other guarantees are not. Soundness holds when the true mechanism lies in the assumed class and fails without warning when it does not, because the residual independence test is then being asked to choose between two wrong models, and the direction it prefers carries no guarantee. Completeness is qualified in the other direction: pairs for which no orientation passes the test are left undecided and pairs attributed to a latent cause are reported as such, so the output is a partial description by design and not by exhaustion.
+
+\paragraph{Advantages.} Direction is recovered beyond the Markov equivalence class, which is the single largest gain available to a method that has only observational data. Latent common causes are detected and labelled rather than quietly absorbed into a spurious edge, which is the failure mode of both other families. The kernel independence test makes no parametric commitment about the shape of the dependence it is looking for.
+
+\paragraph{Drawbacks.} Everything rests on the model class being right, and the method does not report when it is not. Kernel independence testing is expensive in the number of observations and needs a substantial sample before it has power, which makes the method the most sample-hungry of the three. One of the three domains here does not meet that requirement. The plant supplies 0.67 samples per variable at the protocol's subsampling rate, and the synthetic ablation of Appendix~\ref{app:confounders} recovers a planted confounder at no significance level tested when it is given 200 samples. A sparse latent set on that domain measures absent power, then, and not absent confounding. The output is not a single connected structure but a mixture of oriented pairs, undecided pairs and latent-cause pairs, and a downstream consumer has to be told what to do with each. There is no lag, as with GES. And a latent-cause pair, correct as a finding, is precisely the thing a regression on measured variables cannot represent.
+
+\subsection{The three families side by side}
+\label{sec:bg-comparison}
+
+Table~\ref{tab:algo-comparison} sets the three against one another on the properties that matter downstream. The point of the comparison is not to rank them. It is that they fail differently, and a failure mode is what determines whether an algorithm suits a given system.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption[The three discovery families compared]{The three discovery families compared on the properties that determine what a downstream regression receives. The guarantees in the fifth row are asymptotic in every case and none of them transfers to a finite sample.}
+\label{tab:algo-comparison}
+\begin{tabularx}{\textwidth}{@{}l X X X@{}}
+\toprule
+ & \textbf{PCMCI} & \textbf{GES} & \textbf{CAM-UV} \\
+\midrule
+Paradigm
+  & constraint-based
+  & score-based
+  & functional \\[0.4em]
+Evidence used
+  & conditional independence of lagged and contemporaneous candidates
+  & penalised likelihood over equivalence classes
+  & independence of regression residuals \\[0.4em]
+Key assumptions
+  & Markov, faithfulness, causal sufficiency, stationarity, valid independence test
+  & Markov, faithfulness, causal sufficiency, locally consistent score
+  & additive nonlinear mechanisms, independent continuous noise, correct model class \\[0.4em]
+Causal sufficiency
+  & assumed
+  & assumed
+  & not assumed; latent pairs reported \\[0.4em]
+Asymptotic guarantee
+  & sound and complete for the equivalence class; lags oriented by time order
+  & consistent for the equivalence class
+  & identifies direction within the model class, beyond the equivalence class \\[0.4em]
+Output object
+  & a lagged graph, directed at $\tau \ge 1$
+  & a completed partially directed acyclic graph, no lag
+  & oriented pairs, undecided pairs and latent-cause pairs, no lag \\[0.4em]
+Chief cost
+  & multiple testing over many candidate links
+  & combinatorial search; linear-Gaussian default score
+  & kernel independence tests; sample-hungry \\[0.4em]
+Fails by
+  & over-linking, and silence about latent causes
+  & leaving edges unoriented, and misreading nonlinearity as absence
+  & committing to a direction when the model class is wrong \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Three points follow from the table and they bear on everything after it.
+
+The first concerns the type of thing each method produces, not how good it is at producing it. PCMCI emits a temporal object: an edge carries a lag and, above zero, an orientation the clock supplies for free. GES and CAM-UV emit atemporal objects, and an edge from either is a claim that two variables are related without a claim about when. Anything downstream that needs a lag has to supply one, and supplying one is an assumption of the pipeline rather than a finding of the algorithm. That distinction is carried through Chapter~\ref{ch:methodology}.
+
+The second concerns latent causes. Two of the three assume them away. Only CAM-UV can say that a dependence it found is attributable to something nobody measured, and it says so in a form that a regression on measured variables cannot consume directly. A pipeline that takes CAM-UV seriously has to decide what to do with that set, and the decision is not neutral.
+
+The third concerns the relationship between assumption strength and output strength, which runs the way one would expect. CAM-UV assumes the most about the mechanism and returns the most: full orientation, latent detection. GES assumes the least about functional form among the two static methods and returns the least: an equivalence class with edges it declines to orient. PCMCI sits between them and is rescued by time, since the temporal order does for its lagged edges what a functional assumption does for CAM-UV's. Each of these trades is a bet on what the system is like. None of them can be verified from the data the bet is made on, which is why an evaluation across all three says something an evaluation of any one of them cannot.

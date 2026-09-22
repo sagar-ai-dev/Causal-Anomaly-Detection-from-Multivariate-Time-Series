@@ -1,0 +1,10 @@
+Dataset,Model,Variant,F1,F1_std,AUC_ROC,AUC_std,AUC_PR,n
+Robotics (Pepper),Neural Baseline,LSTM Autoencoder,0.7972,0.0039,0.8804,0.0032,0.9002,155
+Robotics (Pepper),Neural Baseline,TCN Autoencoder,0.8053,0.0139,0.8856,0.0051,0.9164,155
+Robotics (Pepper),Neural Baseline,Transformer Autoencoder,0.7140,0.0195,0.8139,0.0158,0.8731,155
+Healthcare (ECG),Neural Baseline,LSTM Autoencoder,0.2355,0.0070,0.7077,0.0048,0.7267,4793
+Healthcare (ECG),Neural Baseline,TCN Autoencoder,0.2945,0.0133,0.6379,0.0038,0.6994,4793
+Healthcare (ECG),Neural Baseline,Transformer Autoencoder,0.2660,0.0213,0.6102,0.0332,0.6737,4793
+Industrial (TEP),Neural Baseline,LSTM Autoencoder,0.9406,0.0003,0.9670,0.0006,0.9983,16590
+Industrial (TEP),Neural Baseline,TCN Autoencoder,0.9987,0.0000,0.9997,0.0001,1.0000,16590
+Industrial (TEP),Neural Baseline,Transformer Autoencoder,0.9987,0.0000,0.9988,0.0001,0.9999,16590

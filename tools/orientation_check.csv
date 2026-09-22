@@ -1,0 +1,4 @@
+Algorithm,Expected variables,Correct orientation,Transposed,Distinguishes orientation,Planted pairs recovered,Planted pairs total,Spurious pairs
+PCMCI,6,6,40,yes,3,3,4
+GES,6,6,refused (LinAlgError),yes,3,3,1
+CAM-UV,6,6,40,yes,3,3,0

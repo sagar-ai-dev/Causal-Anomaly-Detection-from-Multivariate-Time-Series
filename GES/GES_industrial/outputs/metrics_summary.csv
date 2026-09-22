@@ -1,0 +1,4 @@
+Dataset,Model,Model Variant,Threshold,TP,FP,TN,FN,Accuracy,Precision,Recall,F1,AUC_ROC,AUC_PR
+Industrial (TEP),GES,Linear / Ridge,1.357001,950,4,59,310,0.7627,0.9958,0.7540,0.8582,0.8407,0.9915
+Industrial (TEP),GES,Polynomial degree 3,2.575948,945,4,59,315,0.7589,0.9958,0.7500,0.8556,0.8849,0.9939
+Industrial (TEP),GES,RBF + Ridge,3.059786,1019,4,59,241,0.8148,0.9961,0.8087,0.8927,0.8994,0.9948

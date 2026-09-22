@@ -1,0 +1,261 @@
+%=======================================================================
+%  CHAPTER 4 -- METHODOLOGY
+%=======================================================================
+\chapter{Methodology}
+\label{ch:methodology}
+
+%-----------------------------------------------------------------------
+\section{Overview of the Unified Pipeline}
+\label{sec:method-overview}
+
+\subsection{The five blocks}
+
+The detector is built once and reused. Data recorded under fault-free operation enters at the left of Figure~\ref{fig:architecture} and passes through five blocks, each of which takes a definite object from the one before it and hands a definite object to the one after.
+
+Preprocessing puts the raw channels on a common footing. It splits the record chronologically, decides which variables and which samples are carried forward, and emits a rectangular matrix of observations by variables. Causal discovery reads that matrix and returns a graph whose edges are candidate mechanisms. What the next block needs from it is narrower than a graph: for every variable, the set of other variables it will be predicted from, each with a lag attached. Turning the first object into the second is a job the pipeline does and the algorithms do not, and it is where most of this chapter's detail sits.
+
+The baseline fit turns each parent set into a model. For every target it fits a regression of that variable on its parents, using fault-free data alone, so what the fitted coefficients encode is the plant in good health. Those coefficients are the reference the rest of the pipeline is measured against.
+
+Online scoring is where detection happens. The same regressions are updated with a recursive least squares filter as new samples arrive, and the quantity monitored is the movement of the coefficients rather than the size of the prediction error. A relationship that still holds produces stable coefficients under the update. A relationship that has broken forces them to move. Reducing that movement across all targets gives one anomaly score per timestep, and a sample is flagged when the score passes a threshold set from fault-free data alone. Attribution then ranks the variables by how much each contributed, which turns a detection into an
+explanation.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{\textwidth}{!}{\input{figures/architecture}}
+  \caption[The unified detection pipeline]{The unified detection pipeline. Preprocessing, baseline fit, online scoring and attribution are identical in every configuration; only the causal discovery step and the regression family vary, and those are the two methodological axes this chapter declares. The third annotation in the diagram marks the data entering at the left, which changes no stage of the pipeline and belongs to the experimental design of Chapter~\ref{ch:experimental_setup} rather than to the method.}
+  \label{fig:architecture}
+\end{figure}
+
+Each block gets its own section below. The order of the sections is the order of the arrows, and each one states four things: what enters, what leaves, what has to be true for the block to be doing what it claims, and why the next block cannot proceed without what this one produces. The algorithms themselves are not re-described here; they belong to Chapter~\ref{ch:background}, and what matters at this level is the shape of what they emit.
+
+\subsection{What varies and what is held fixed}
+
+The methodology has two axes. The first is the causal discovery algorithm, which decides what each regression is allowed to look at. The second is the regression family, which decides what functional form the fit may take. Crossing three algorithms with three regression variants gives nine methodological combinations, and the same nine are instantiated on each of the three application domains described in Chapter~\ref{ch:experimental_setup}, which is how the study arrives at 27 configurations in total. The domain is not a third axis of the method. It changes the data entering at the left and nothing downstream of it.
+
+The diagram carries the experimental design as well as the data flow. Of the five blocks, three are identical in every configuration and only two vary. Shading marks that distinction, so a reader can see what is controlled before reading the argument for it.
+
+Comparability comes from holding the downstream detector constant while varying its inputs. Preprocessing is deliberately not uniform. As set out in Section~\ref{sec:method-preprocessing}, the subsampling rate and the variable inclusion cap are treated as intrinsic properties of each algorithm's operational workflow instead of as free parameters to be equalised. Research Question~1 therefore compares each algorithm as it is intended to be applied, preprocessing included, and does not isolate the discovery step. The cost of that decision is quantified in Chapter~\ref{ch:results}.
+
+What remains strictly uniform is the whole of the downstream detection machinery: the recursive least squares update, the coefficient drift score, the thresholding rule and the attribution depth. That is a programmatically enforced claim and not an aspirational one, verified by a suite of seventeen automated checks on every build. The most consequential of them audits every configuration for any step that would fit a decision threshold to the evaluation labels, and fails the build if one is found, so no configuration can quietly improve its reported figures by selecting its own operating point against the answers.
+
+%-----------------------------------------------------------------------
+\section{Block One: Preprocessing}
+\label{sec:method-preprocessing}
+
+\paragraph{Input and output.} The block receives the raw multivariate record as it comes off the instrument, with its native sampling rate, its native units and its full channel list. It emits two matrices of observations by variables: a fault-free training partition on which discovery and the baseline fit are performed, and an evaluation partition that is never seen until the online pass. Nothing downstream ever touches the raw record.
+
+\paragraph{The chronological split.} The first operation divides the record in time, taking the earlier portion as the fault-free training baseline and holding out the remainder for evaluation. The proportion is fixed at 70\% and 30\% in every configuration. A chronological division is a necessity rather than a convention. A randomised split over a time series places future observations in the training set, and because consecutive samples are strongly dependent this leaks information in a way a random split over independent observations does not. The leak is not visible in the resulting scores, which is why it is dangerous. The proportion is not free of consequences elsewhere. On the plant it leaves discovery 35 samples for 52 variables at the protocol's subsampling rate, which is 0.67 observations per variable, and Chapter~\ref{ch:experimental_setup} shows the recovered graph densifying monotonically as that count grows. The sparsity of the industrial graphs is a property of this split before it is a property of the process.
+
+\paragraph{Variable selection and subsampling.} The second operation decides how wide and how long the matrix is. Both quantities are treated as properties of each algorithm's workflow rather than as uniform pipeline constraints, because neither is free in both directions: a score-based search over a wide system fails to converge at variable counts a constraint-based search handles without difficulty, and equalising downwards would mean evaluating one algorithm on a problem nobody would give it. The inclusion cap and the sample retention rate therefore vary by algorithm, and the values applied in each case are tabulated in Chapter~\ref{ch:experimental_setup} and Appendix~\ref{app:hyperparameters}. This is the study's principal threat to internal validity. It is declared here, not conceded later, and it is quantified rather than left as a word. PCMCI selects its retention rate per domain, taking 74 on Robotics, 7 on Healthcare and 1 on Industrial, where GES and CAM-UV are fixed at 10 throughout and capped at 35 variables besides. Two ablations bound what that costs. Forcing PCMCI to rate 10 on Robotics drops it from 0.8752 to 0.6813; forcing GES to rate 1 on Healthcare drops it from 0.8114 to 0.6184. The rate is therefore not a nuisance parameter, and the comparison RQ1 asks for is foreclosed by it: 54 of the 108 within-domain comparisons admit no paired test, every one of them involving PCMCI against another algorithm.
+
+\paragraph{Standardisation, and where it actually happens.} The third operation is $z$-score standardisation, applied per target rather than globally. A separate scaler is fitted over the causal parents of each individual target variable, using the training partition alone, and the fitted scalers are retained so that the online pass applies the identical transform. Strictly, this straddles two blocks: a scaler defined over a target's parents cannot be fitted until the parent sets exist, so the operation is specified here and executed once the graph has been normalised. One consequence affects how coefficients are read. The same physical sensor may receive a different scaling depending on which target's regression it appears in, so coefficient magnitudes are comparable within a target and not across targets.
+
+\paragraph{Assumptions.} The block assumes the training partition is fault-free, which is an assumption about the data and not something the pipeline can verify. It assumes the record is stationary enough over the training window for a scaler fitted there to remain valid on the evaluation window. And by subsampling it assumes that the dynamics of interest survive at the reduced rate, which is a bet on the bandwidth of the process relative to the retention rate chosen.
+
+\paragraph{Why the next block needs this.} Causal discovery operates on a matrix whose rows are observations and whose columns are variables, and every one of the three algorithms will accept a transposed matrix without complaint and return a plausible graph over the wrong objects. Fixing the orientation, the width and the length here means the discovery block has one well-defined input and no opportunity to silently reinterpret it.
+
+%-----------------------------------------------------------------------
+\section{Block Two: Causal Discovery}
+\label{sec:method-axis1}
+
+\paragraph{Input and output.} The block receives the fault-free training matrix and returns a graph. What it does internally is one of the three procedures of Chapter~\ref{ch:background} and is not restated here. What matters at this level is that the three return objects of different types, and the pipeline needs one type.
+
+PCMCI returns a lagged graph: an edge carries the identity of the parent, the identity of the child and the lag between them. GES returns a completed partially directed acyclic graph over the unlagged matrix, in which some edges are oriented and some are not, and none carries a lag. CAM-UV returns two sets over the unlagged matrix, the observed parent set $P$ and the set $U$ of variable pairs it attributes to an unobserved common cause, and neither carries a lag either. A regression cannot be fitted to any of those three directly.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{tikzpicture}[
+    font=\small,
+    emit/.style={draw=black!55, fill=black!4, rounded corners=2pt,
+                 text width=38mm, align=left, inner sep=3pt, minimum height=13mm},
+    proc/.style={draw=orange!70!black, line width=0.7pt, fill=orange!12,
+                 rounded corners=2pt, text width=36mm, align=left, inner sep=3pt,
+                 minimum height=26mm},
+    pset/.style={draw=black!55, fill=black!4, rounded corners=2pt,
+                 text width=40mm, align=left, inner sep=3pt, minimum height=26mm},
+    cpt/.style={font=\scriptsize\itshape, text=black!60, align=center},
+    ar/.style={-{Stealth[length=2mm]}, draw=black!65}
+  ]
+    \node[emit] (e1) {\textbf{PCMCI}\\[1mm]\scriptsize directed edges, each with a lag};
+    \node[emit] (e2) [below=4mm of e1] {\textbf{GES}\\[1mm]\scriptsize adjacency with symmetric entries, no lag};
+    \node[emit] (e3) [below=4mm of e2] {\textbf{CAM-UV}\\[1mm]\scriptsize oriented pairs $P$, latent pairs $U$, no lag};
+
+    \node[proc] (norm) [right=12mm of e2]
+      {\textbf{normalisation}\\[1mm]\scriptsize
+       drop edges whose direction is undetermined\\[0.6mm]
+       assign a lag where the algorithm supplies none\\[0.6mm]
+       write a latent pair as a bidirectional dependency, where no observed parent already sits there};
+
+    \node[pset] (ps) [right=12mm of norm]
+      {\textbf{parent sets}\\[1mm]\scriptsize
+       for every target $X^j$, an ordered list of $(\text{variable},\ \text{lag})$ pairs\\[1mm]
+       $\mathcal{P}(X^j_t) = \{X^{i}_{t-\tau},\ \dots\}$};
+
+    \foreach \a in {e1,e2,e3} \draw[ar] (\a) -- (norm);
+    \draw[ar] (norm) -- (ps);
+
+    \node[cpt] (c1) [below=5mm of e3] {three output types};
+    \node[cpt] (c2) at (norm |- c1) {pipeline, not algorithm};
+    \node[cpt] (c3) at (ps |- c1) {one input type for the fit};
+  \end{tikzpicture}}
+  \caption[What the discovery block emits and what the fit receives]{What the discovery block emits and what the baseline fit receives. The three algorithms return objects of three different types, and only the rightmost one can be regressed on. The middle box is the pipeline's work and not the algorithms': every edge that reaches a regression as a lagged parent of a particular target does so under a rule stated in this section, which means the lag structure of a GES or CAM-UV graph is a property of this pipeline and not a finding of the discovery step.}
+  \label{fig:graph-normalisation}
+\end{figure}
+
+\subsection{From a discovered graph to a parent set}
+\label{sec:integration-verification}
+
+The conversion is shown in Figure~\ref{fig:graph-normalisation}. Four rules do the work, and each of them is a decision the pipeline makes on the algorithm's behalf.
+
+\paragraph{Undetermined directions are dropped.} An edge is retained only where the adjacency entries agree that the direction is determined, which is to say only where the graph asserts an unambiguous $i \to j$ relation. Where the search declined to orient an edge, the pipeline declines too. The alternative would be to orient by convention, which would hand the regressor a parent the data does not support, and the undirected edge exists precisely because the data cannot choose. Some information is lost this way. That is the correct price. What it buys, and what it costs, can both be counted. A variable reached only by edges the search declined to orient receives no parent at all and drops out of the detector entirely, which is why GES enters the regression stage with nine targets of the twelve electrocardiogram leads and twenty-five of the plant's fifty-two variables. Those are mechanisms the detector cannot watch. The alternative was to invent directions for them.
+
+\paragraph{A missing lag is assigned, not discovered.} An algorithm run on the unlagged matrix returns an edge that says two variables are related and says nothing about when. Before it can enter a regression that differences an offline baseline against an online pass, a lag has to be attached. The pipeline attaches one, uniformly within a configuration, and the value used in each case is recorded in Chapter~\ref{ch:experimental_setup}. This point is laboured because it is easy to misread a figure of a GES or CAM-UV graph as a temporal claim. It is not one. PCMCI is the only one of the three whose lags are discovered. Where they land narrows the distinction considerably. Measured against the cached graphs under the sparsification rule and the cap below, 100.0\% of the parent slots PCMCI's regressions retain on Healthcare and on Robotics sit at lag zero, and 98.7\% do on Industrial. So the algorithm that discovers its lags almost always discovers zero, and the assigned lag the other two receive differs from the discovered one less often than this paragraph's emphasis implies.
+
+\paragraph{Latent pairs are written as bidirectional dependencies.} CAM-UV's set $U$ names pairs whose dependence it attributes to something nobody measured. The scoring mechanism cannot regress on an unmeasured signal, so each such pair is written into the final graph as a bidirectional dependency, forcing each variable to account for the other's variance without representing the cause explicitly. Observed parents take strict precedence: a pair is written from $U$ only where no edge from $P$ already occupies that position. The rule preserves the statistical linkage the algorithm found and is honest about what it is doing, which is substituting a proxy for a cause that was never recorded. How much of a graph that substitution accounts for varies enormously by domain, and on one of the three it accounts for all of it. CAM-UV assigns 480 robot variable pairs to $U$, a saturation of 80.7\%, and returns no observed-parent edge whatsoever, so every edge the detector receives there is a proxy. On the electrocardiogram 39 of the 48 linked pairs come from $U$, and on the plant 14 of 49. Appendix~\ref{app:confounders} separates the two counts in each domain.
+
+\paragraph{The graph is sparsified before use.} A threshold is applied to the retained edge set before parent lists are built, with the multiplier tabulated in Appendix~\ref{app:hyperparameters}. On a dense graph this is the difference between a parent list that reflects the search and one that reflects whatever survived an arbitrary truncation later. In practice the rule barely fires. Across all nine algorithm-domain configurations the effect-size filter removes edges in exactly one, PCMCI on healthcare, where it discards three of 66 variable pairs. The reason is that GES and CAM-UV supply edge indicators and not continuous strengths, so for those two the filter compares 1.0 against the mean of a sparse indicator matrix and every edge survives it. Graph density is therefore settled by what each algorithm discovers, not by this rule.
+
+\paragraph{Assumptions.} The block assumes the training window satisfies the standing assumptions of Section~\ref{sec:bg-assumptions} for whichever algorithm is running, and those differ: two of the three assume causal sufficiency and one does not. It assumes the matrix orientation is correct, which the previous block guarantees and which no algorithm checks. And the lag-assignment rule assumes that a relation the algorithm found without reference to time is adequately represented at the single lag chosen, which is the weakest assumption in the pipeline and is not defensible in general. It is stated so that the results obtained under it can be read with that in view.
+
+\paragraph{Why the next block needs a regression at all.} A graph is a statement about which variables are related. It is not a statement about how, and a detector cannot be built from it directly, because a graph is a fixed object and a fault is a change. What changes when a mechanism breaks is the strength and the shape of the dependence, not usually the existence of the edge. Fitting a regression to each parent set converts the qualitative claim into a quantitative one: a coefficient vector that has a value under normal operation and a different value once the mechanism has altered. The graph decides what the model may look at; the regression is what supplies a number that can move. This is the reason the pipeline does not stop at discovery, and it is also why a discovery error is costly downstream, since a missing parent leaves a mechanism unmodelled and a spurious parent gives the filter a coefficient with nothing real to track.
+
+%-----------------------------------------------------------------------
+\section{Block Three: Baseline Fit}
+\label{sec:method-baseline}
+
+\paragraph{Input and output.} The block receives the parent sets and the fault-free training partition. For every target it emits three things that the online pass will need: a fitted scaler over that target's parents, a feature map, and a baseline coefficient vector $\mathbf{w}^{(0)}_v$ including an intercept. Everything the detector later calls normal is contained in those vectors.
+
+\subsection{The parent cap}
+\label{sec:parent-cap}
+
+A target is not regressed on every parent its graph supplies. The incoming edges are sorted by lag and the three shortest-lag parents are kept, so the design matrix is at most three columns wide plus the intercept, in every configuration and irrespective of how dense the graph is. Ties are resolved by variable index.
+
+Figure~\ref{fig:parentcap-diagram} shows the selection concretely, because the mechanism is easy to misread as a tie-break among near-equal candidates. It is nothing of the kind. Temporal position decides what survives, and the strength of the evidence the discovery step weighed decides nothing at all. The cap is uniform as a rule and radically uneven as an intervention. On robotics it discards 98.2\% of the edges PCMCI found and none at all of what GES found; on healthcare, 75.8\% against 26.5\%. A comparison run under it therefore sets a whole graph against a small selection from another, and where the cap binds hardest the surviving parent set is settled substantially by lag order and a tiebreak on variable index rather than by the search. Chapter~\ref{ch:results} measures the bite for all nine pairs.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{0.92\textwidth}{!}{\input{figures/parent_cap}}
+  \caption[How the three-parent cap selects a design matrix]{How the three-parent cap selects a design matrix. The incoming edges of a target are ordered by lag, closest first, and the first three are kept. The surviving parents are therefore chosen by temporal position rather than by the strength of the evidence the discovery step weighed, and on a dense graph the parent set is settled substantially by an arbitrary tiebreak. The design matrix is the same width in every configuration, however dense the graph that fed it.}
+  \label{fig:parentcap-diagram}
+\end{figure}
+
+The bound is not a parameter of this study and was not selected against any result. It is retained from the reference implementation, which sorts by lag and truncates at three identically, and it is kept for the same parity reason that governs the attribution rules of Section~\ref{sec:method-attribution}. The same reference fixes the depth at which attributions are tabulated, which is why that is also three.
+
+Two consequences pull in opposite directions and both belong in the record. The cap equalises regression capacity across the three algorithms, so a performance difference within a domain cannot be attributed to one algorithm having been handed a larger model to fit, which is what the controlled comparison of Research Question~1 requires. Against that, it does not remove the same number of edges from each algorithm, because the algorithms do not produce graphs of comparable density. Where the cap binds hard, the surviving parents are chosen by lag order with ties broken on an index, so the parent set is settled substantially by an arbitrary rule rather than by the discovery step that was supposed to determine it. A dense graph therefore does not give the regression more to work with. It gives the tiebreak more to do. How often the bound binds for each algorithm, and what follows from it, is measured in Chapter~\ref{ch:results}.
+
+\subsection{The regression family}
+\label{sec:method-regression}
+
+The second methodological axis varies the functional form of the fit while leaving the parent set untouched. Three variants are used: linear, a polynomial expansion of degree three, and a radial basis function feature map. The point of the axis is to test whether the linearity implicit in most of the pipeline is a limitation or an adequate approximation, and it is a fair test only because the parent sets are identical across the three.
+
+The RBF variant uses random Fourier features, a randomised low-rank approximation to the RBF kernel~\cite{rahimi2007random}, which then feeds the same linear estimator. It is a feature expansion and not a radial basis function network, and the distinction matters because the coefficients the detector monitors are coefficients on explicit features, which a kernel method would not provide.
+
+\subsection{Feature maps and regularisation}
+\label{sec:bg-features}
+
+Expanding a parent set polynomially or through a Fourier map raises the dimension quickly and produces strongly correlated features. Left unpenalised, that collinearity leaves the design matrix ill-conditioned and the least squares solution unstable, which for a drift detector is fatal rather than merely inconvenient: an unstable solution moves for numerical reasons and the detector cannot tell that movement from a fault. All three variants therefore apply an $L_2$ ridge penalty~\cite{hoerl1970ridge}.
+
+Standardisation is applied to the parent variables before the expansion, and the order matters. An $L_2$ penalty is isotropic in the coordinates it is given, so without prior standardisation a variable with a large native magnitude receives proportionally less shrinkage than one with a small magnitude, and the penalty stops being neutral between parents.
+
+The regularisation strength requires a statement, because it bounds the empirical claims that follow. In two of the three domains it is held constant at 10.0 across every configuration. The third is Robotics, where it varies by regression variant, taking 10.0 for the linear map, 0.01 for the degree-three polynomial and 1.0 for the random Fourier features, because a degree-three expansion and a random-feature map over that domain's parent sets produce design matrices too poorly conditioned to fit under the stronger penalty. That was an engineering necessity and not a tuning choice, and the values are tabulated in Appendix~\ref{app:hyperparameters}. The structural invariant is that the penalty varies by domain and feature map but is identical across all three algorithms within every cell, which an automated check enforces on every build.
+
+Reporting this here rather than in a limitations list makes clear which comparisons are strictly controlled and which are partially confounded. For Research Question~1, comparing the discovery algorithms against one another, there is no confounding at all: within any cell the identical penalty is applied to all three, so the algorithmic comparison is isolated. For Research Question~2, evaluating the effect of the regression family, the domain with the varying penalty is partially confounded, since a within-algorithm comparison there changes the feature map and the penalty at the same time. Any difference observed under those conditions cannot be attributed to the feature space alone. Chapter~\ref{ch:results} is written with that restriction in force.
+
+\paragraph{Assumptions.} The fit assumes the training partition is fault-free, since a fault inside it would be encoded as normal and would then be invisible. It assumes the parent set is adequate, in that a target whose true drivers were not discovered will have a baseline that explains little and coefficients that wander for reasons unrelated to any fault. And it assumes that a mechanism holding over the training window is the right reference for the evaluation window, which is the stationarity assumption again, now carrying the weight of the whole detector.
+
+\paragraph{Why the next block needs this.} Online scoring measures a departure, and a departure needs a reference. The baseline vectors are that reference. Nothing else in the pipeline defines what normal is.
+
+%-----------------------------------------------------------------------
+\section{Block Four: Online Scoring}
+\label{sec:method-scoring}
+
+\paragraph{Input and output.} The block receives the baseline coefficient vectors, the fitted scalers and feature maps, and the evaluation partition arriving one sample at a time. It emits an anomaly score for each timestep, a binary flag obtained by thresholding it, and the per-target drift vectors that the attribution block consumes. The design matrix it works over is the capped one fixed by the previous block: at most three parents plus an intercept, whichever algorithm supplied the graph.
+
+\subsection{Recursive coefficient tracking}
+\label{sec:bg-scoring}
+
+To track the coefficients continuously the pipeline uses a recursive least squares filter~\cite{haykin2002adaptive}, one per regression target. Indexing targets by $v$ and their coefficients by $k$, and writing $y_t$ for a target's observation and $\mathbf{x}_t$ for its parent vector, the design vector is augmented with a constant intercept term, so that a pure baseline shift is captured as structural drift instead of passing unobserved.
+
+At each timestep the filter updates the weight vector $\mathbf{w}_t$ and the inverse correlation matrix $\mathbf{P}_t$:
+\begin{align}
+  \mathbf{k}_t &= \frac{\mathbf{P}_{t-1}\mathbf{x}_t}{\lambda + \mathbf{x}_t^{\top}\mathbf{P}_{t-1}\mathbf{x}_t}, \label{eq:rls-gain} \\
+  e_t &= y_t - \mathbf{x}_t^{\top}\mathbf{w}_{t-1}, \label{eq:rls-error} \\
+  \mathbf{w}_t &= \mathbf{w}_{t-1} + \mathbf{k}_t e_t, \label{eq:rls-weight} \\
+  \mathbf{P}_t &= \frac{1}{\lambda}\left(\mathbf{P}_{t-1} - \mathbf{k}_t\mathbf{x}_t^{\top}\mathbf{P}_{t-1}\right). \label{eq:rls-cov}
+\end{align}
+
+The forgetting factor $\lambda \in (0, 1]$ governs the effective memory, which is $1/(1-\lambda)$ samples. It is the one parameter of this block that varies by domain, and the choice is a genuine trade, not a default anyone should inherit unexamined. At $\lambda = 1$ the filter has infinite memory and reduces exactly to ordinary least squares over the whole stream, which is the right estimator for a process whose mechanisms are constant and the wrong one for a process whose operating point moves, because every fault-free sample continues to pull the estimate back towards the old value and a real change is tracked slowly or not at all. Below one, the filter follows a moving relationship at the cost of a noisier estimate and a shorter horizon over which a slow drift can accumulate. Domains that are comparatively stationary take the first setting and domains requiring continuous adaptation take the second; the values are tabulated in Appendix~\ref{app:hyperparameters} and the consequences are measured in Chapter~\ref{ch:results}.
+
+A warm-up of fifteen steps is enforced before any drift is scored, so that initialisation transients cannot register as detections. Those samples are dropped rather than scored, because the online error is pinned to zero during warm-up and scoring them would inject a block of artificial zeros into whichever class the run belongs to.
+
+\paragraph{Numerical safeguards.} Three guards are applied inside the update, identically in every configuration, and each prevents a failure that would otherwise be silent rather than loud. Inputs and outputs are sanitised against non-finite values, since one such value entering the state corrupts every subsequent update for that target without raising anything. The denominator $\lambda + \mathbf{x}_t^{\top}\mathbf{P}_{t-1}\mathbf{x}_t$ is checked for finiteness and magnitude, and where it is degenerate the update is skipped instead of applied, because a degenerate denominator yields a zero or infinite gain and the filter would carry on over corrupted state. And $\mathbf{P}_t$ is re-symmetrised at each step, since floating-point error in the covariance recursion accumulates asymmetry over many iterations even though the update is symmetric in exact arithmetic. None of the three alters the recursion where it is well conditioned.
+
+\subsection{From drift to a decision}
+
+Write $d_{v,k}(t)$ for the departure of the $k$th coefficient of target $v$ from its fault-free value,
+\[
+  d_{v,k}(t) = w_{v,k}(t) - w_{v,k}^{(0)} .
+\]
+Two quantities are built from this and they serve different purposes, so they are separated here rather than left to a reader to infer which is which.
+
+The detection score compares each coefficient's departure against a tolerance derived from how much that same coefficient drifts under fault-free operation, and reports the largest such ratio across every coefficient of every modelled target:
+\[
+  s(t) \;=\; \max_{v,\,k}\;
+  \frac{\bigl| d_{v,k}(t) \bigr|}
+       {\kappa \, \bigl\lVert d^{\text{base}}_{v,k} \bigr\rVert_2},
+\]
+where $\lVert d^{\text{base}}_{v,k} \rVert_2$ is the norm of that coefficient's drift over the fault-free baseline window and $\kappa$ is a per-domain tolerance, identical across the three algorithms within a domain and tabulated in Appendix~\ref{app:hyperparameters}. Normalising each coefficient by its own baseline is what allows coefficients of very different scales to be compared. Taking the maximum instead of a sum means one broken relationship is enough to raise the score, which is the behaviour a detector should have: a fault in a plant is local, and a sum would dilute it across every mechanism that is still working.
+
+The attribution ranking uses the other reduction, the $L_2$ norm of a target's coefficient departures at a given time,
+\[
+  a_v(t) = \big\lVert \mathbf{d}_{v}(t) \big\rVert_2 ,
+\]
+which the next block aggregates. Detection asks whether any relationship has broken. Attribution asks which one broke worst. The two questions call for different reductions and the pipeline keeps both.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{0.82\textwidth}{!}{\input{figures/drift_pipeline}}
+  \caption[How a coefficient drift score is computed]{How a coefficient drift score is computed. The two windows are disjoint and the two passes are separate: the baseline coefficients are fitted offline on the fault-free training split, while the online filter tracks the coefficients across the evaluation split. Drift is their difference, taken per coefficient and normalised by that same coefficient's fault-free variation before the maximum is taken over all of them. The order of those last two operations is what makes a single broken relationship sufficient to raise the score. Every constant shown is the one the pipeline applies, and each is tabulated in Appendix~\ref{app:hyperparameters}.}
+  \label{fig:drift-pipeline}
+\end{figure}
+
+Figure~\ref{fig:drift-pipeline} sets the mechanism out in one place. Equations~\ref{eq:rls-gain} to~\ref{eq:rls-cov} describe how a single coefficient moves from one timestep to the next; what they do not show is that two passes are run over two disjoint windows and their coefficients are then differenced. The baseline vector comes from the offline fit of the previous block, the tracked vector from the online pass, and the score is built from the gap.
+
+\paragraph{Why drift and not residual magnitude.} The block rests on a premise that can be stated plainly and is testable. A detector whose state is the size of the residual cannot distinguish a mechanism breaking from a mechanism whose inputs have merely rescaled, because both make the observed values move. Coefficient drift tracks the integrity of the modelled relationship instead of the size of its error, and a rescaling that leaves the relationship intact leaves the coefficients where they were. The premise is not assumed here. It is verified against a controlled construction whose answer is known independently. A genuine structural break returns a mean drift of 4.1707; an amplitude rescaling that leaves the relationship intact returns 0.0002. Four orders of magnitude separate them, and a reconstruction metric separates them by nothing at all, because both move the observed values. Chapter~\ref{ch:experimental_setup} reports that check alongside the others, and Chapter~\ref{ch:results} measures the consequences on real data.
+
+\paragraph{The decision rule.} An anomaly is declared when the score exceeds the 95th percentile of the drift distribution computed exclusively on held-out fault-free data. The rule is uniform across every configuration and it is label-blind by construction: the pipeline rejects threshold tuning against evaluation labels, which fits the operating point to the very faults being evaluated. The consequence is a fixed false-positive budget for every model, which is what gives the performance comparisons of Chapter~\ref{ch:results} a consistent basis.
+
+\paragraph{Assumptions.} Scoring assumes the baseline vectors describe a healthy plant, and inherits everything the fit assumed. It assumes the fault-free drift used to set $\kappa$ and the threshold is representative of fault-free operation generally, so that a novel but benign operating regime is not scored as a fault. And it assumes a fault is expressed in the coefficients of at least one modelled mechanism, which is the substantive claim of the whole approach: a fault that changes no discovered relationship is invisible to this detector no matter how large it is.
+
+%-----------------------------------------------------------------------
+\section{Block Five: Attribution}
+\label{sec:method-attribution}
+\label{sec:bg-attribution}
+
+\paragraph{Input and output.} The block receives the per-target drift vectors produced by the online pass, collected over two windows: the window in which the anomaly was flagged, and the fault-free baseline window. It emits a ranking of the monitored variables. The detection score says that something broke; this ranking says where to look.
+
+The quantity ranked is the per-target drift norm $a_v(t)$ defined above, written $a_{:,i}$ when collected over the timesteps of a window for variable $i$. Two ranking rules are built from it and the pipeline uses both, in different places.
+
+\paragraph{The normalised rule.} The attribution score for variable $i$ is the root mean square of its drift over the anomaly window, divided by the root mean square of the same quantity over the fault-free baseline window,
+\[
+  A_i = \frac{\operatorname{RMS}_{\text{attack}}\!\left(a_{:,i}\right)}
+             {\max\!\left(E_i,\; 10^{-8}\right)},
+  \qquad
+  E_i = \operatorname{RMS}_{\text{baseline}}\!\left(a_{:,i}\right).
+\]
+The small constant is a floor on the denominator and not an additive smoothing term; it prevents division by a vanishing baseline for a variable that is effectively static. The ratio is length-independent, so a score of one means a variable is drifting exactly as much as it does under normal operation. This rule suits a system whose variables span very different intrinsic amplitudes, since a raw norm would let naturally noisy channels dominate the ranking whether or not their mechanisms had altered. What it isolates is the relative degradation of a mechanism, irrespective of the signal's native scale.
+
+\paragraph{The unnormalised rule.} The second rule drops the baseline division and reduces the drift over the anomaly window directly,
+\[
+  A_i = \lVert a_{:,i} \rVert_2 .
+\]
+The norm is taken over time for a single variable, not over variables at a single time. This rule is retained for parity with the reference implementation wherever that reference defines the evaluation protocol, and it suits a system in which a genuinely quiet channel is quiet because nothing drives it. Dividing by a very small baseline confers an enormous advantage on such a channel and can displace the correct attribution entirely, which is not a hypothetical failure: Chapter~\ref{ch:results} exhibits it.
+
+\paragraph{Which rule applies where.} The choice is made per domain and is declared in Section~\ref{sec:ranking-rule}, because it depends on the variance profile of the instrumented system rather than on anything methodological. One robotics fault settles the point. Under the raw norm the joint attack attributes to KneePicthTemp, the temperature the documented requirement names; under the normalised rule the same data returns LedEarR3 and LedEarL3, which carry the twelfth and thirteenth smallest fault-free baselines of 244 variables at 0.0268 against KneePicthTemp's 7.5380 at rank 238. Dividing by a baseline that small hands two quiet sensors a 281-fold advantage and displaces the correct attribution outright. Neither rule dominates, which is why the choice is made per domain and declared. Within a domain the rule is identical across all nine configurations, so within-domain comparisons are strictly like-for-like. Across domains they are not, and attribution rankings are therefore never compared between domains anywhere in this thesis.
+
+One detail of the reduction has to be stated because it changes how a ranking must be read. Some configurations take the $L_2$ norm of the drift vector and others its root mean square, which is that norm divided by $\sqrt{T}$ for a window of $T$ timesteps. Since $T$ is a property of the window and not of the variable, the two differ by a factor constant across every variable being ranked, so they induce the same ordering and the same top entries. The consequential difference between the two rules is the division by $E_i$, which does vary by variable and does change the ranking. The choice of reduction does not.
+
+\paragraph{Depth.} Attribution depth is held constant across every configuration. The ranking itself covers every monitored target; the per-anomaly figures plot the fifteen highest-scoring variables, or all of them where a domain monitors fewer; and the tables report the three highest, which is the depth at which every attribution result in this thesis is stated.
+
+\paragraph{Assumptions.} The block assumes that the target whose coefficients moved most is the target nearest the fault, which is a strong assumption in a system with feedback, since a controller compensating for an upstream fault can produce the largest drift some distance from the cause. The robot's LED attack is that case, and the pipeline surfaces the downstream victim rather than the attacked channel: TabletTouchX, which ranks 78th of 249 sensors by raw standardised deviation, is returned first in all nine configurations. Whether that counts as the root cause or as one step removed from it is a question this assumption decides in advance. It assumes the drift observed during the anomaly window is attributable to the anomaly, which requires the window to be correctly located. And it assumes the monitored variable set contains something close to the root cause; a fault in an uninstrumented component can only ever be attributed to whichever measured mechanism it disturbed most.

@@ -1,0 +1,4 @@
+Dataset,Model,Variant,F1,AUC_ROC,AUC_PR,n,prevalence
+Robotics (Pepper),Trivial control,mean |z| from fault-free,0.7447,0.8139,0.8787,195,0.5795
+Healthcare (ECG),Trivial control,mean |z| from fault-free,0.1803,0.6136,0.6709,5003,0.5717
+Industrial (TEP),Trivial control,mean |z| from fault-free,0.8670,0.9286,0.9962,16800,0.9524

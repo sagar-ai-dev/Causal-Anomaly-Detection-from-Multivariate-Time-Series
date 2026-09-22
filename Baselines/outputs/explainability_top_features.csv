@@ -1,0 +1,4 @@
+Dataset,Model Variant,Fault Name,Top Variable 1,Top Variable 2,Top Variable 3
+Robotics (Pepper),LSTM Autoencoder,WheelsControl.csv,WheelBSpeed,GyroscopeZ,WheelFLSpeed
+Robotics (Pepper),LSTM Autoencoder,JointControl.csv,RShoulderPitch,LaserF03Y,LaserF03X
+Robotics (Pepper),LSTM Autoencoder,LedsControl.csv,TabletTouchX,TabletTouchY,LedFaceBL4

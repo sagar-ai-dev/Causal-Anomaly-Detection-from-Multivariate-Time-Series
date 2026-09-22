@@ -1,0 +1,7 @@
+quantity,value
+rls_vs_ols_max_abs_diff,7.478e-10
+rls_forgetting_estimate,2.5004
+rls_no_forgetting_estimate,1.2522
+drift_broken_relationship,4.1707
+drift_rescaled_intact,0.0002
+drift_unchanged,0.0008

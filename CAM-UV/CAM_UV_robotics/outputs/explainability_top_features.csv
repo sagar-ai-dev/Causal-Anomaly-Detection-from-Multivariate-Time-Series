@@ -1,0 +1,10 @@
+Dataset,Model Variant,Fault Name,Top Variable 1,Top Variable 2,Top Variable 3
+Robotics (Pepper),Linear / Ridge,WheelsControl.csv,WheelFRTemp,WheelBTemp,WheelFRStiff
+Robotics (Pepper),Linear / Ridge,JointControl.csv,KneePicthTemp,WheelFRStiff,WheelFRTemp
+Robotics (Pepper),Linear / Ridge,LedsControl.csv,TabletTouchX,TabletTouchY,WheelBStiff
+Robotics (Pepper),Polynomial degree 3,WheelsControl.csv,WheelFRStiff,KneePicthTemp,WheelFRTemp
+Robotics (Pepper),Polynomial degree 3,JointControl.csv,KneePicthTemp,WheelFRTemp,WheelBTemp
+Robotics (Pepper),Polynomial degree 3,LedsControl.csv,TabletTouchX,TabletTouchY,HeadPicthTemp
+Robotics (Pepper),RBF + Ridge,WheelsControl.csv,KneePicthTemp,HipRollTemp,WheelFRTemp
+Robotics (Pepper),RBF + Ridge,JointControl.csv,KneePicthTemp,HeadPicthTemp,WheelBTemp
+Robotics (Pepper),RBF + Ridge,LedsControl.csv,TabletTouchX,TabletTouchY,KneePicthTemp

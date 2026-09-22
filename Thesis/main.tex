@@ -1,0 +1,196 @@
+%=======================================================================
+%  Master's dissertation -- University of Verona
+%  Department of Computer Science, Master's Degree in Artificial Intelligence
+%
+%  Build:  latexmk -pdf main.tex        (or press Recompile in Overleaf)
+%
+%  Tables under tables/ are GENERATED. Regenerate them with
+%      python Thesis/tools/make_tables.py
+%  after any pipeline rerun, and never edit them by hand.
+%=======================================================================
+%  oneside, not twoside. A twoside layout widens the inner margin to leave room for a
+%  binding, which puts the text block half a centimetre right of centre on odd pages and
+%  half a centimetre left of centre on even ones. Bound and read on paper that is correct
+%  and invisible. Read on screen, as this will be, the block jumps a centimetre sideways
+%  at every page turn and the page number alternates corners. oneside centres the block
+%  and fixes the number in one place. It also drops the blank verso pages that openright
+%  inserted before each chapter.
+\documentclass[12pt,a4paper,oneside]{report}
+
+%---------------------------------------------------------------- encoding
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+
+%------------------------------------------------------------------ layout
+%  Left and right are equal, so the block is centred. Their sum is unchanged at 6cm, so
+%  the text width stays exactly 15cm and nothing reflows: every table keeps its width,
+%  every figure its scale, every line its breaks. Only the position moves.
+\usepackage[a4paper,left=3cm,right=3cm,top=3cm,bottom=3cm,headheight=14pt]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{emptypage}          % no headers on blank verso pages
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+%  LE and RO are the verso and recto slots of a two-sided layout. In oneside every page
+%  counts as recto, so LE would never fire and the chapter name would vanish from the
+%  document entirely. L and R put both marks on every page instead, and the page number
+%  moves to the centre of the foot rather than alternating between the outer corners.
+%  One mark, not two. LE and RO are the verso and recto slots of a two-sided layout,
+%  where each page carries one of them and each has the full line to itself. Putting
+%  both on every page in oneside gave them no guaranteed gap: fancyhdr sets L flush
+%  left and R flush right in the same box, and when they meet they simply overlap.
+%  "Chapter 5. Experimental Setup and Dataset Methodology" against "5.2. Dataset
+%  Provenance and Characteristics" is 96 characters, which is wider than this text
+%  block, and the compiled header read "...and Datase5.2MetDodolegyProvenance...".
+%
+%  The section mark alone is the better of the two to keep: it carries the chapter
+%  number already, so nothing a reader needs is lost, and the longest section title
+%  here is 61 characters, which fits with room to spare.
+\fancyhead[R]{\small\nouppercase{\rightmark}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+%------------------------------------------------------------ mathematics
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{bm}
+
+%---------------------------------------------------------------- graphics
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, fit, backgrounds, calc}
+\usepackage{subcaption}
+\usepackage[font=small,labelfont=bf]{caption}
+
+%------------------------------------------------------------------ tables
+\usepackage{booktabs}           % \toprule \midrule \bottomrule
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{tabularx}           % X columns for tables that must fit the text width
+\usepackage{longtable}
+\usepackage{rotating}
+
+%------------------------------------------------------------------- misc
+\usepackage{microtype}
+% Long unbreakable identifiers -- precision\_recall\_curve sets 22 characters,
+% CONFOUNDER_MODE="integrate" 27 -- give TeX no legal breakpoint, so a few
+% paragraphs in Chapter 2 and Section 4.6 ended 1-8pt over the measure rather
+% than break badly. emergencystretch is the targeted lever: it is offered only
+% on a final pass, for lines TeX cannot otherwise set, so lines that already
+% fit are untouched and the trade is a slightly loose line instead of one
+% poking into the margin.
+\emergencystretch=3em
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[hidelinks,breaklinks]{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue!50!black,
+  pdftitle={Causal anomaly detection from multivariate time series},
+  pdfauthor={Sagar Lal},
+  pdfsubject={Master's degree in Artificial Intelligence (LM-18), Universit\`a di Verona}
+}
+\usepackage[nameinlink,capitalise]{cleveref}
+
+%------------------------------------------------------- float placement
+%  LaTeX's defaults are tuned for a paper with two or three figures, and this
+%  document has 23 tables and 43 figures, many of them large. Under the
+%  defaults a float taller than 70 per cent of the text block cannot sit at the
+%  top of a page, textfraction reserves a fifth of every page for text, and a
+%  float page needs to be only half full to be acceptable. The combination
+%  pushed the larger tables onto pages of their own and left those pages, and
+%  the text pages before them, substantially empty -- Table 6.8 was occupying a
+%  page by itself with white space below it.
+%
+%  These values let a large float share a page with a few lines of text and
+%  require a float page to be nearly full before it is broken. They change
+%  placement only; nothing about the content moves.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.7}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
+
+%--------------------------------------------------------- code listings
+\definecolor{codegray}{gray}{0.95}
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  backgroundcolor=\color{codegray},
+  breaklines=true,
+  frame=none,
+  numbers=none,
+  showstringspaces=false,
+  language=Python
+}
+
+%------------------------------------------------------------- shorthands
+\newcommand{\PCMCI}{PCMCI}
+\newcommand{\GES}{GES}
+\newcommand{\CAMUV}{CAM-UV}
+\newcommand{\AUC}{AUC-ROC}
+
+\begin{document}
+
+%=======================================================================
+%  FRONT MATTER
+%=======================================================================
+\pagenumbering{roman}
+\pagestyle{empty}
+
+\input{frontmatter/titlepage}
+\cleardoublepage
+
+\input{frontmatter/abstract}
+\cleardoublepage
+
+\input{frontmatter/acknowledgements}
+\cleardoublepage
+
+\pagestyle{fancy}
+\tableofcontents
+\cleardoublepage
+\addcontentsline{toc}{chapter}{List of Figures}
+\listoffigures
+\cleardoublepage
+\addcontentsline{toc}{chapter}{List of Tables}
+\listoftables
+\cleardoublepage
+\input{frontmatter/abbreviations}
+\cleardoublepage
+
+%=======================================================================
+%  BODY
+%=======================================================================
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\input{chapters/01_introduction}
+\input{chapters/02_related_work}
+\input{chapters/03_background}
+\input{chapters/04_methodology}
+\input{chapters/05_experimental_setup}
+\input{chapters/06_results}
+\input{chapters/07_discussion}
+\input{chapters/08_conclusion}
+
+%=======================================================================
+%  BACK MATTER
+%=======================================================================
+\cleardoublepage
+\bibliographystyle{IEEEtran}
+\addcontentsline{toc}{chapter}{Bibliography}
+\bibliography{refs}
+
+\appendix
+\input{appendices/A_hyperparameters}
+\input{appendices/B_full_results}
+\input{appendices/C_confounders}
+
+\end{document}

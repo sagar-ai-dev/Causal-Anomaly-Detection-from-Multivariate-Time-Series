@@ -1,0 +1,5 @@
+subsample,samples,parent_edges,confounded,density
+10,35,35,14,0.0238
+5,70,35,28,0.0343
+2,175,59,38,0.0509
+1,350,115,90,0.1112

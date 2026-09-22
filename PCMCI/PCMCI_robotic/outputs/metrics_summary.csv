@@ -1,0 +1,4 @@
+Dataset,Model,Model Variant,Threshold,TP,FP,TN,FN,Accuracy,Precision,Recall,F1,AUC_ROC,AUC_PR
+Robotics (Pepper),PCMCI,Linear / Ridge,1.102806,55,4,64,58,0.6575,0.9322,0.4867,0.6395,0.7825,0.8810
+Robotics (Pepper),PCMCI,Polynomial degree 3,2.369763,75,4,64,38,0.7680,0.9494,0.6637,0.7812,0.8053,0.9090
+Robotics (Pepper),PCMCI,RBF + Ridge,2.450148,77,4,64,36,0.7790,0.9506,0.6814,0.7938,0.8752,0.9419

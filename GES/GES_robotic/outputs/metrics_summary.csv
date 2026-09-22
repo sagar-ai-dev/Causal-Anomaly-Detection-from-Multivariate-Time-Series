@@ -1,0 +1,4 @@
+Dataset,Model,Model Variant,Threshold,TP,FP,TN,FN,Accuracy,Precision,Recall,F1,AUC_ROC,AUC_PR
+Robotics (Pepper),GES,Linear / Ridge,0.259205,321,28,520,509,0.6103,0.9198,0.3867,0.5445,0.5906,0.7647
+Robotics (Pepper),GES,Polynomial degree 3,3.277862,383,28,520,447,0.6553,0.9319,0.4614,0.6172,0.6999,0.8325
+Robotics (Pepper),GES,RBF + Ridge,0.425592,421,28,520,409,0.6829,0.9376,0.5072,0.6583,0.6516,0.8195

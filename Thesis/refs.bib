@@ -1,0 +1,714 @@
+% =====================================================================
+%  BIBLIOGRAPHY
+%
+%  VERIFY EVERY ENTRY BEFORE SUBMITTING. These are the core references
+%  for this work and the details below are given to save you typing, but
+%  a wrong page number or year in a bibliography is exactly the kind of
+%  inaccuracy criterion 7 of the Verona regulation penalises. Open the DOI,
+%  check the year, volume, pages and author list, and fix anything that
+%  differs. Better still, export the BibTeX from the publisher and replace
+%  the entry wholesale.
+%
+%  63 entries, which covers a thesis of this scope. They are grouped by the
+%  section that needs them: causality, discovery algorithms, software,
+%  datasets, anomaly detection, process monitoring, electrophysiology, XAI
+%  and statistics. Several carry a note saying where to cite them.
+%
+%  One to read before writing Chapter 6: delong1988comparing. Hanley-McNeil
+%  gives a confidence interval for a single AUC; DeLong is the correct test
+%  for comparing two AUCs measured on the SAME samples, which is what a
+%  causal-versus-neural comparison is.
+% =====================================================================
+
+% ---------------------------------------------------------------- causality
+@book{pearl2009causality,
+  title     = {Causality: Models, Reasoning and Inference},
+  author    = {Pearl, Judea},
+  edition   = {2},
+  year      = {2009},
+  publisher = {Cambridge University Press}
+}
+
+@book{spirtes2000causation,
+  title     = {Causation, Prediction, and Search},
+  author    = {Spirtes, Peter and Glymour, Clark and Scheines, Richard},
+  edition   = {2},
+  year      = {2000},
+  publisher = {MIT Press}
+}
+
+@book{peters2017elements,
+  title     = {Elements of Causal Inference: Foundations and Learning Algorithms},
+  author    = {Peters, Jonas and Janzing, Dominik and Sch{\"o}lkopf, Bernhard},
+  year      = {2017},
+  publisher = {MIT Press}
+}
+
+% ------------------------------------------------------- discovery algorithms
+@article{runge2019pcmci,
+  title   = {Detecting and quantifying causal associations in large nonlinear
+             time series datasets},
+  author  = {Runge, Jakob and Nowack, Peer and Kretschmer, Marlene and
+             Flaxman, Seth and Sejdinovic, Dino},
+  journal = {Science Advances},
+  volume  = {5},
+  number  = {11},
+  year    = {2019},
+  doi     = {10.1126/sciadv.aau4996}
+}
+
+% note: VERIFY pages and issue
+@article{runge2023causalinference,
+  title   = {Causal inference for time series},
+  author  = {Runge, Jakob and Gerhardus, Andreas and Varando, Gherardo and
+             Eyring, Veronika and Camps-Valls, Gustau},
+  journal = {Nature Reviews Earth \& Environment},
+  volume  = {4},
+  year    = {2023}
+}
+
+@article{chickering2002ges,
+  title   = {Optimal Structure Identification With Greedy Search},
+  author  = {Chickering, David Maxwell},
+  journal = {Journal of Machine Learning Research},
+  volume  = {3},
+  pages   = {507--554},
+  year    = {2002}
+}
+
+@inproceedings{maeda2021camuv,
+  title     = {Causal Additive Models with Unobserved Variables},
+  author    = {Maeda, Takashi Nicholas and Shimizu, Shohei},
+  booktitle = {Proceedings of the 37th Conference on Uncertainty in
+               Artificial Intelligence (UAI)},
+  year      = {2021}
+}
+
+@article{shimizu2006lingam,
+  title   = {A Linear Non-Gaussian Acyclic Model for Causal Discovery},
+  author  = {Shimizu, Shohei and Hoyer, Patrik O. and Hyv{\"a}rinen, Aapo and
+             Kerminen, Antti},
+  journal = {Journal of Machine Learning Research},
+  volume  = {7},
+  pages   = {2003--2030},
+  year    = {2006}
+}
+
+@article{buhlmann2014cam,
+  title   = {CAM: Causal Additive Models, High-Dimensional Order Search and
+             Penalized Regression},
+  author  = {B{\"u}hlmann, Peter and Peters, Jonas and Ernest, Jan},
+  journal = {The Annals of Statistics},
+  volume  = {42},
+  number  = {6},
+  pages   = {2526--2556},
+  year    = {2014}
+}
+
+@inproceedings{hoyer2008anm,
+  title     = {Nonlinear causal discovery with additive noise models},
+  author    = {Hoyer, Patrik O. and Janzing, Dominik and Mooij, Joris M. and
+               Peters, Jonas and Sch{\"o}lkopf, Bernhard},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2008}
+}
+
+% ------------------------------------------------------------------ software
+% note: Software package. VERIFY the citation the package itself requests
+@misc{runge2023tigramite,
+  title        = {Tigramite: Causal inference and causal discovery for time
+                  series datasets},
+  author       = {Runge, Jakob and others},
+  year         = {2023},
+  howpublished = {Software package},
+  url          = {https://github.com/jakobrunge/tigramite}
+}
+
+% note: Verified against the JMLR landing page. The library supplies GES
+%   and the CAM-UV cross-check; Table 1 of this paper is the taxonomy
+%   the algorithm selection in Chapter 4 is argued from
+@article{zheng2024causallearn,
+  title   = {Causal-learn: Causal Discovery in Python},
+  author  = {Zheng, Yujia and Huang, Biwei and Chen, Wei and Ramsey, Joseph and
+             Gong, Mingming and Cai, Ruichu and Shimizu, Shohei and
+             Spirtes, Peter and Zhang, Kun},
+  journal = {Journal of Machine Learning Research},
+  volume  = {25},
+  number  = {60},
+  pages   = {1--8},
+  year    = {2024},
+  url     = {https://jmlr.org/papers/v25/23-0970.html}
+}
+
+% note: This is the implementation the CAM-UV pipeline actually runs --
+%   lingam.camuv, loaded by camuv_engine.py. CHECK the issue number
+@article{ikeuchi2023lingam,
+  title   = {Python Package for Causal Discovery Based on {LiNGAM}},
+  author  = {Ikeuchi, Takashi and Ide, Mayumi and Zeng, Yan and
+             Maeda, Takashi Nicholas and Shimizu, Shohei},
+  journal = {Journal of Machine Learning Research},
+  volume  = {24},
+  pages   = {1--8},
+  year    = {2023}
+}
+
+% ------------------------------------------------------------------ datasets
+@article{wagner2020ptbxl,
+  title   = {PTB-XL, a large publicly available electrocardiography dataset},
+  author  = {Wagner, Patrick and Strodthoff, Nils and Bousseljot, Ralf-Dieter and
+             Kreiseler, Dieter and Lunze, Fatima I. and Samek, Wojciech and
+             Schaeffter, Tobias},
+  journal = {Scientific Data},
+  volume  = {7},
+  number  = {154},
+  year    = {2020},
+  doi     = {10.1038/s41597-020-0495-6}
+}
+
+@article{downs1993tep,
+  title   = {A plant-wide industrial process control problem},
+  author  = {Downs, James J. and Vogel, Ernest F.},
+  journal = {Computers \& Chemical Engineering},
+  volume  = {17},
+  number  = {3},
+  pages   = {245--255},
+  year    = {1993}
+}
+
+@article{rieth2017tepdata,
+  title   = {Additional Tennessee Eastman Process Simulation Data for Anomaly
+             Detection Evaluation},
+  author  = {Rieth, Cory A. and Amsel, Ben D. and Tran, Randy and
+             Cook, Maia B.},
+  journal = {Harvard Dataverse},
+  year    = {2017},
+  doi     = {10.7910/DVN/6C3JR1}
+}
+
+% ------------------------------------------------------- anomaly detection
+@article{chandola2009survey,
+  title   = {Anomaly detection: A survey},
+  author  = {Chandola, Varun and Banerjee, Arindam and Kumar, Vipin},
+  journal = {ACM Computing Surveys},
+  volume  = {41},
+  number  = {3},
+  pages   = {1--58},
+  year    = {2009}
+}
+
+@inproceedings{hundman2018telemanom,
+  title     = {Detecting Spacecraft Anomalies Using LSTMs and Nonparametric
+               Dynamic Thresholding},
+  author    = {Hundman, Kyle and Constantinou, Valentino and Laporte, Christopher
+               and Colwell, Ian and Soderstrom, Tom},
+  booktitle = {Proceedings of the 24th ACM SIGKDD International Conference on
+               Knowledge Discovery \& Data Mining},
+  year      = {2018}
+}
+
+@inproceedings{audibert2020usad,
+  title     = {USAD: UnSupervised Anomaly Detection on Multivariate Time Series},
+  author    = {Audibert, Julien and Michiardi, Pietro and Guyard, Fr{\'e}d{\'e}ric
+               and Marti, S{\'e}bastien and Zuluaga, Maria A.},
+  booktitle = {Proceedings of the 26th ACM SIGKDD International Conference on
+               Knowledge Discovery \& Data Mining},
+  year      = {2020}
+}
+
+% note: The point-adjustment critique. Cite this when justifying your
+%   protocol in Section 5.3
+@inproceedings{kim2022rigorous,
+  title     = {Towards a Rigorous Evaluation of Time-Series Anomaly Detection},
+  author    = {Kim, Siwon and Choi, Kukjin and Choi, Hyun-Soo and Lee, Byunghan
+               and Yoon, Sungroh},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume    = {36},
+  year      = {2022}
+}
+
+% ------------------------------------------------------ neural architectures
+@article{hochreiter1997lstm,
+  title   = {Long Short-Term Memory},
+  author  = {Hochreiter, Sepp and Schmidhuber, J{\"u}rgen},
+  journal = {Neural Computation},
+  volume  = {9},
+  number  = {8},
+  pages   = {1735--1780},
+  year    = {1997}
+}
+
+@article{bai2018tcn,
+  title   = {An Empirical Evaluation of Generic Convolutional and Recurrent
+             Networks for Sequence Modeling},
+  author  = {Bai, Shaojie and Kolter, J. Zico and Koltun, Vladlen},
+  journal = {arXiv preprint arXiv:1803.01271},
+  year    = {2018}
+}
+
+@inproceedings{vaswani2017attention,
+  title     = {Attention Is All You Need},
+  author    = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and
+               Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N. and
+               Kaiser, {\L}ukasz and Polosukhin, Illia},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2017}
+}
+
+% -------------------------------------------------------------------- XAI
+@inproceedings{lundberg2017shap,
+  title     = {A Unified Approach to Interpreting Model Predictions},
+  author    = {Lundberg, Scott M. and Lee, Su-In},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2017}
+}
+
+@inproceedings{ribeiro2016lime,
+  title     = {"Why Should I Trust You?": Explaining the Predictions of Any
+               Classifier},
+  author    = {Ribeiro, Marco Tulio and Singh, Sameer and Guestrin, Carlos},
+  booktitle = {Proceedings of the 22nd ACM SIGKDD International Conference on
+               Knowledge Discovery and Data Mining},
+  year      = {2016}
+}
+
+% note: Use this to frame intrinsic versus post-hoc explanation in Section
+%   2.4 -- it argues your position better than you can
+@article{rudin2019stop,
+  title   = {Stop explaining black box machine learning models for high stakes
+             decisions and use interpretable models instead},
+  author  = {Rudin, Cynthia},
+  journal = {Nature Machine Intelligence},
+  volume  = {1},
+  number  = {5},
+  pages   = {206--215},
+  year    = {2019}
+}
+
+% ---------------------------------------------------- estimation and stats
+% note: The RLS derivation in Section 3.5
+@book{haykin2002adaptive,
+  title     = {Adaptive Filter Theory},
+  author    = {Haykin, Simon},
+  edition   = {4},
+  year      = {2002},
+  publisher = {Prentice Hall}
+}
+
+% note: The RBFSampler basis used in the RBF variant
+@inproceedings{rahimi2007random,
+  title     = {Random Features for Large-Scale Kernel Machines},
+  author    = {Rahimi, Ali and Recht, Benjamin},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2007}
+}
+
+@article{kunsch1989blockbootstrap,
+  title   = {The Jackknife and the Bootstrap for General Stationary
+             Observations},
+  author  = {K{\"u}nsch, Hans R.},
+  journal = {The Annals of Statistics},
+  volume  = {17},
+  number  = {3},
+  pages   = {1217--1241},
+  year    = {1989}
+}
+
+@article{hanley1982roc,
+  title   = {The meaning and use of the area under a receiver operating
+             characteristic (ROC) curve},
+  author  = {Hanley, James A. and McNeil, Barbara J.},
+  journal = {Radiology},
+  volume  = {143},
+  number  = {1},
+  pages   = {29--36},
+  year    = {1982}
+}
+
+% note: The independence test CAM-UV uses. CHECK the page range
+@inproceedings{gretton2005hsic,
+  title     = {Measuring Statistical Dependence with {H}ilbert-{S}chmidt Norms},
+  author    = {Gretton, Arthur and Bousquet, Olivier and Smola, Alex and
+               Sch{\"o}lkopf, Bernhard},
+  booktitle = {Algorithmic Learning Theory (ALT)},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {3734},
+  publisher = {Springer},
+  year      = {2005}
+}
+% =====================================================================
+%  ADDITIONAL REFERENCES -- second pass
+%
+%  Same warning as the first block: verify every field against the DOI
+%  before submitting. Entries carrying a CHECK note have one field I am
+%  least confident of.
+% =====================================================================
+
+% ------------------------------------------------- causal discovery, time series
+% note: PCMCI+. CHECK page range
+@inproceedings{runge2020pcmciplus,
+  title     = {Discovering contemporaneous and lagged causal relations in
+               autocorrelated nonlinear time series datasets},
+  author    = {Runge, Jakob},
+  booktitle = {Proceedings of the 36th Conference on Uncertainty in
+               Artificial Intelligence (UAI)},
+  pages     = {1388--1397},
+  year      = {2020}
+}
+
+@article{granger1969causality,
+  title   = {Investigating Causal Relations by Econometric Models and
+             Cross-spectral Methods},
+  author  = {Granger, C. W. J.},
+  journal = {Econometrica},
+  volume  = {37},
+  number  = {3},
+  pages   = {424--438},
+  year    = {1969}
+}
+
+@article{glymour2019review,
+  title   = {Review of Causal Discovery Methods Based on Graphical Models},
+  author  = {Glymour, Clark and Zhang, Kun and Spirtes, Peter},
+  journal = {Frontiers in Genetics},
+  volume  = {10},
+  pages   = {524},
+  year    = {2019},
+  doi     = {10.3389/fgene.2019.00524}
+}
+
+@article{vowels2022dags,
+  title   = {D'ya Like DAGs? A Survey on Structure Learning and Causal
+             Discovery},
+  author  = {Vowels, Matthew J. and Camgoz, Necati Cihan and Bowden, Richard},
+  journal = {ACM Computing Surveys},
+  volume  = {55},
+  number  = {4},
+  pages   = {1--36},
+  year    = {2022},
+  doi     = {10.1145/3527154}
+}
+
+@inproceedings{zheng2018notears,
+  title     = {DAGs with NO TEARS: Continuous Optimization for Structure
+               Learning},
+  author    = {Zheng, Xun and Aragam, Bryon and Ravikumar, Pradeep and
+               Xing, Eric P.},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2018}
+}
+
+@article{ramsey2017fges,
+  title   = {A million variables and more: the Fast Greedy Equivalence Search
+             algorithm for learning high-dimensional graphical causal models},
+  author  = {Ramsey, Joseph and Glymour, Madelyn and Sanchez-Romero, Ruben and
+             Glymour, Clark},
+  journal = {International Journal of Data Science and Analytics},
+  volume  = {3},
+  pages   = {121--129},
+  year    = {2017}
+}
+
+% ------------------------------------------- causal methods for fault diagnosis
+% note: RCD
+@inproceedings{ikram2022rcd,
+  title     = {Root Cause Analysis of Failures in Microservices through Causal
+               Discovery},
+  author    = {Ikram, Azam and Chakraborty, Sarthak and Mitra, Subrata and
+               Saini, Shiv Kumar and Bagchi, Saurabh and Kocaoglu, Murat},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2022}
+}
+
+% note: CIRCA. CHECK author list
+@inproceedings{li2022circa,
+  title     = {Causal Inference-Based Root Cause Analysis for Online Service
+               Systems with Intervention Recognition},
+  author    = {Li, Mingjie and Li, Zeyan and Yin, Kaixin and Nie, Xiaohui and
+               Zhang, Wenchi and Sui, Kaixin and Pei, Dan},
+  booktitle = {Proceedings of the 28th ACM SIGKDD Conference on Knowledge
+               Discovery and Data Mining},
+  year      = {2022}
+}
+
+@article{pham2024baro,
+  title   = {BARO: Robust Root Cause Analysis for Microservices via
+             Multivariate Bayesian Online Change Point Detection},
+  author  = {Pham, Luan and Ha, Huong and Zhang, Hongyu},
+  journal = {Proceedings of the ACM on Software Engineering},
+  volume  = {1},
+  year    = {2024},
+  doi     = {10.1145/3660805}
+}
+
+% note: A controlled re-evaluation of published RCA methods. The closest
+%   methodological precedent for this thesis's protocol argument
+@article{pham2024howfar,
+  title   = {Root Cause Analysis for Microservice System based on Causal
+             Inference: How Far Are We?},
+  author  = {Pham, Luan and Ha, Huong and Zhang, Hongyu},
+  journal = {arXiv preprint arXiv:2408.13729},
+  year    = {2024}
+}
+
+% --------------------------------------------------- anomaly detection, methods
+@article{malhotra2016lstmad,
+  title   = {LSTM-based Encoder-Decoder for Multi-sensor Anomaly Detection},
+  author  = {Malhotra, Pankaj and Ramakrishnan, Anusha and Anand, Gaurangi and
+             Vig, Lovekesh and Agarwal, Puneet and Shroff, Gautam},
+  journal = {arXiv preprint arXiv:1607.00148},
+  year    = {2016}
+}
+
+@inproceedings{su2019omnianomaly,
+  title     = {Robust Anomaly Detection for Multivariate Time Series through
+               Stochastic Recurrent Neural Network},
+  author    = {Su, Ya and Zhao, Youjian and Niu, Chenhao and Liu, Rong and
+               Sun, Wei and Pei, Dan},
+  booktitle = {Proceedings of the 25th ACM SIGKDD International Conference on
+               Knowledge Discovery and Data Mining},
+  pages     = {2828--2837},
+  year      = {2019}
+}
+
+% note: Learns a relational graph for detection without causal semantics
+%   -- the closest non-causal analogue of this work
+@inproceedings{deng2021gdn,
+  title     = {Graph Neural Network-Based Anomaly Detection in Multivariate
+               Time Series},
+  author    = {Deng, Ailin and Hooi, Bryan},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume    = {35},
+  number    = {5},
+  pages     = {4027--4035},
+  year      = {2021}
+}
+
+% note: Large controlled benchmark; strong support both for the protocol
+%   argument and for reporting a trivial baseline
+@article{schmidl2022anomaly,
+  title   = {Anomaly Detection in Time Series: A Comprehensive Evaluation},
+  author  = {Schmidl, Sebastian and Wenig, Phillip and Papenbrock, Thorsten},
+  journal = {Proceedings of the VLDB Endowment},
+  volume  = {15},
+  number  = {9},
+  pages   = {1779--1797},
+  year    = {2022}
+}
+
+% note: Cite in Section 2.1 alongside Kim et al. CHECK page range
+@article{wu2023flawed,
+  title   = {Current Time Series Anomaly Detection Benchmarks are Flawed and
+             are Creating the Illusion of Progress},
+  author  = {Wu, Renjie and Keogh, Eamonn J.},
+  journal = {IEEE Transactions on Knowledge and Data Engineering},
+  volume  = {35},
+  number  = {3},
+  pages   = {2421--2429},
+  year    = {2023}
+}
+
+@article{blazquezgarcia2021review,
+  title   = {A Review on Outlier/Anomaly Detection in Time Series Data},
+  author  = {Bl{\'a}zquez-Garc{\'i}a, Ane and Conde, Angel and Mori, Usue and
+             Lozano, Jose A.},
+  journal = {ACM Computing Surveys},
+  volume  = {54},
+  number  = {3},
+  pages   = {1--33},
+  year    = {2021}
+}
+
+% ------------------------------------------------- process monitoring, industry
+% note: The classical PCA and PLS treatment of TEP. Cite when arguing that
+%   magnitude-based monitoring is the industrial default and that the
+%   trivial control is therefore not a straw man
+@book{chiang2001faultdetection,
+  title     = {Fault Detection and Diagnosis in Industrial Systems},
+  author    = {Chiang, Leo H. and Russell, Evan L. and Braatz, Richard D.},
+  year      = {2001},
+  publisher = {Springer}
+}
+
+@article{yin2012comparison,
+  title   = {A comparison study of basic data-driven fault diagnosis and
+             process monitoring methods on the benchmark Tennessee Eastman
+             process},
+  author  = {Yin, Shen and Ding, Steven X. and Haghani, Adel and Hao, Haiyang
+             and Zhang, Ping},
+  journal = {Journal of Process Control},
+  volume  = {22},
+  number  = {9},
+  pages   = {1567--1581},
+  year    = {2012}
+}
+
+% ---------------------------------------------------------------- electrophysiology
+% note: The origin of aVR, aVL and aVF -- three of the four leads the
+%   independent-lead ablation removes
+@article{goldberger1942augmented,
+  title   = {A simple, indifferent, electrocardiographic electrode of zero
+             potential and a technique of obtaining augmented, unipolar,
+             extremity leads},
+  author  = {Goldberger, Emanuel},
+  journal = {American Heart Journal},
+  volume  = {23},
+  number  = {4},
+  pages   = {483--492},
+  year    = {1942}
+}
+
+@article{strodthoff2021ptbxlbenchmark,
+  title   = {Deep Learning for ECG Analysis: Benchmarks and Insights from
+             PTB-XL},
+  author  = {Strodthoff, Nils and Wagner, Patrick and Schaeffter, Tobias and
+             Samek, Wojciech},
+  journal = {IEEE Journal of Biomedical and Health Informatics},
+  volume  = {25},
+  number  = {5},
+  pages   = {1519--1528},
+  year    = {2021}
+}
+
+@article{goldberger2000physionet,
+  title   = {PhysioBank, PhysioToolkit, and PhysioNet: Components of a New
+             Research Resource for Complex Physiologic Signals},
+  author  = {Goldberger, Ary L. and Amaral, Luis A. N. and Glass, Leon and
+             Hausdorff, Jeffrey M. and Ivanov, Plamen Ch. and Mark, Roger G.
+             and Mietus, Joseph E. and Moody, George B. and Peng, Chung-Kang
+             and Stanley, H. Eugene},
+  journal = {Circulation},
+  volume  = {101},
+  number  = {23},
+  pages   = {e215--e220},
+  year    = {2000}
+}
+
+% ------------------------------------------------------------ explainability, XAI
+@inproceedings{sundararajan2017integrated,
+  title     = {Axiomatic Attribution for Deep Networks},
+  author    = {Sundararajan, Mukund and Taly, Ankur and Yan, Qiqi},
+  booktitle = {Proceedings of the 34th International Conference on Machine
+               Learning (ICML)},
+  pages     = {3319--3328},
+  year      = {2017}
+}
+
+@article{theissler2022xaitimeseries,
+  title   = {Explainable AI for Time Series Classification: A Review,
+             Taxonomy and Research Directions},
+  author  = {Theissler, Andreas and Spinnato, Francesco and Schlegel, Udo and
+             Guidotti, Riccardo},
+  journal = {IEEE Access},
+  volume  = {10},
+  pages   = {100700--100724},
+  year    = {2022}
+}
+
+% note: Cite when arguing that the injected attacks give this work a
+%   ground truth for attribution that most XAI evaluation lacks
+@article{doshivelez2017rigorous,
+  title   = {Towards A Rigorous Science of Interpretable Machine Learning},
+  author  = {Doshi-Velez, Finale and Kim, Been},
+  journal = {arXiv preprint arXiv:1702.08608},
+  year    = {2017}
+}
+
+% note: An attribution check that can fail. Directly supports the argument
+%   that 8-of-9 is more informative than 9-of-9
+@inproceedings{adebayo2018sanity,
+  title     = {Sanity Checks for Saliency Maps},
+  author    = {Adebayo, Julius and Gilmer, Justin and Muelly, Michael and
+               Goodfellow, Ian and Hardt, Moritz and Kim, Been},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2018}
+}
+
+% ------------------------------------------------------------------- statistics
+@book{efron1994bootstrap,
+  title     = {An Introduction to the Bootstrap},
+  author    = {Efron, Bradley and Tibshirani, Robert J.},
+  year      = {1994},
+  publisher = {Chapman and Hall/CRC}
+}
+
+@article{politis1994stationary,
+  title   = {The Stationary Bootstrap},
+  author  = {Politis, Dimitris N. and Romano, Joseph P.},
+  journal = {Journal of the American Statistical Association},
+  volume  = {89},
+  number  = {428},
+  pages   = {1303--1313},
+  year    = {1994}
+}
+
+% note: Cite when explaining why AUC-PR is not comparable across the three
+%   domains, whose prevalence ranges from 0.57 to 0.95
+@inproceedings{davis2006prroc,
+  title     = {The Relationship Between Precision-Recall and ROC Curves},
+  author    = {Davis, Jesse and Goadrich, Mark},
+  booktitle = {Proceedings of the 23rd International Conference on Machine
+               Learning (ICML)},
+  pages     = {233--240},
+  year      = {2006}
+}
+
+@article{demsar2006statistical,
+  title   = {Statistical Comparisons of Classifiers over Multiple Data Sets},
+  author  = {Dem{\v{s}}ar, Janez},
+  journal = {Journal of Machine Learning Research},
+  volume  = {7},
+  pages   = {1--30},
+  year    = {2006}
+}
+
+% note: The penalty used in every regression variant here
+@article{hoerl1970ridge,
+  title   = {Ridge Regression: Biased Estimation for Nonorthogonal Problems},
+  author  = {Hoerl, Arthur E. and Kennard, Robert W.},
+  journal = {Technometrics},
+  volume  = {12},
+  number  = {1},
+  pages   = {55--67},
+  year    = {1970}
+}
+
+% note: The correct test for comparing two AUCs measured on the SAME
+%   samples. Cite this rather than Hanley-McNeil if a paired
+%   causal-versus-neural comparison is reported
+@article{delong1988comparing,
+  title   = {Comparing the Areas under Two or More Correlated Receiver
+             Operating Characteristic Curves: A Nonparametric Approach},
+  author  = {DeLong, Elizabeth R. and DeLong, David M. and
+             Clarke-Pearson, Daniel L.},
+  journal = {Biometrics},
+  volume  = {44},
+  number  = {3},
+  pages   = {837--845},
+  year    = {1988}
+}
+
+% note: Chapter 15, "12-Lead ECG System", derives Einthoven's triangle and
+%   states Einthoven's law as Equation 15.2, V_I + V_III = V_II, adding
+%   that only two of the three limb leads are independent -- which is the
+%   source for both the identity in Chapter 1 and the eight-independent-
+%   lead argument. Verified against the free full text at the URL above.
+@book{malmivuo1995bioelectromagnetism,
+  title     = {Bioelectromagnetism: Principles and Applications of Bioelectric
+               and Biomagnetic Fields},
+  author    = {Malmivuo, Jaakko and Plonsey, Robert},
+  year      = {1995},
+  publisher = {Oxford University Press},
+  address   = {New York},
+  url       = {https://www.bem.fi/book/}
+}
+
+@inproceedings{bento2021timeshap,
+  title     = {{TimeSHAP}: Explaining Recurrent Models through Sequence
+               Perturbations},
+  author    = {Bento, Jo{\~a}o and Saleiro, Pedro and Cruz, Andr{\'e} F. and
+               Figueiredo, M{\'a}rio A. T. and Bizarro, Pedro},
+  booktitle = {Proceedings of the 27th ACM SIGKDD Conference on Knowledge
+               Discovery and Data Mining},
+  pages     = {2565--2573},
+  year      = {2021}
+}

@@ -1,0 +1,60 @@
+%=======================================================================
+%  LIST OF ABBREVIATIONS
+%  Every acronym used in the body appears here. Add to this list as you
+%  write; an acronym that appears in the text but not here is the kind of
+%  small inconsistency a controrelatore notices.
+%=======================================================================
+\chapter*{List of Abbreviations}
+\addcontentsline{toc}{chapter}{List of Abbreviations}
+% chapter* sets no page mark, so this list inherited whichever mark was
+% left standing -- and it follows \listoftables, so page two of the
+% abbreviations printed "List of Tables" above it. The header takes
+% \rightmark, which is the second argument.
+\markboth{List of Abbreviations}{List of Abbreviations}
+
+\begin{description}[labelwidth=2.6cm,leftmargin=3.0cm,style=nextline,font=\bfseries]
+  \item[AUC]          Area Under the Curve
+  \item[AUC-PR]    Area Under the Precision--Recall curve
+  \item[AUC-ROC]   Area Under the Receiver Operating Characteristic curve
+  \item[BIC]          Bayesian Information Criterion
+  \item[CAM-UV]    Causal Additive Model with Unobserved Variables
+  \item[CPDAG]     Completed Partially Directed Acyclic Graph
+  \item[CPU]          Central Processing Unit
+  \item[CRC32]        32-bit Cyclic Redundancy Check
+  \item[DAG]       Directed Acyclic Graph
+  \item[ECG]       Electrocardiogram
+  \item[F1]        F-measure, the harmonic mean of precision and recall
+  \item[FCI]          Fast Causal Inference
+  \item[FDR]          False Discovery Rate
+  \item[FN]        False Negative
+  \item[FP]        False Positive
+  \item[FPR]          False Positive Rate
+  \item[GB]        Gigabyte
+  \item[GES]       Greedy Equivalence Search
+  \item[HSIC]      Hilbert--Schmidt Independence Criterion
+  \item[LED]          Light-Emitting Diode
+  \item[LIME]         Local Interpretable Model-agnostic Explanations
+  \item[LSTM]      Long Short-Term Memory
+  \item[MCI]       Momentary Conditional Independence
+  \item[MSE]          Mean Squared Error
+  \item[OLS]       Ordinary Least Squares
+  \item[ParCorr]   Partial Correlation (independence test)
+  \item[PC]        Peter--Clark (causal discovery algorithm)
+  \item[PCA]       Principal Component Analysis
+  \item[PCMCI]     Peter--Clark Momentary Conditional Independence
+  \item[PTB-XL]    Physikalisch-Technische Bundesanstalt XL ECG dataset
+  \item[RBF]       Radial Basis Function
+  \item[RLS]       Recursive Least Squares
+  \item[RMS]          Root Mean Square
+  \item[ROC]       Receiver Operating Characteristic
+  \item[SHAP]      SHapley Additive exPlanations
+  \item[SPC]          Statistical Process Control
+  \item[ST]        ST segment of the electrocardiographic waveform
+  \item[TCN]       Temporal Convolutional Network
+  \item[TEP]       Tennessee Eastman Process
+  \item[TN]        True Negative
+  \item[TP]        True Positive
+  \item[XAI]       Explainable Artificial Intelligence
+  \item[XMEAS]     Measured variable, Tennessee Eastman nomenclature
+  \item[XMV]       Manipulated variable, Tennessee Eastman nomenclature
+\end{description}

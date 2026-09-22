@@ -1,0 +1,12 @@
+# Raw input data is not redistributed from this repository; see DATA.md.
+pepper_csv/
+TEP/
+Healthcare dataset/
+
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+
+# Local agent config, not part of the project
+.claude/

@@ -1,0 +1,73 @@
+%=======================================================================
+%  FIGURE -- the unified detection pipeline
+%
+%  Include from a chapter with:
+%      \begin{figure}[htbp]
+%        \centering
+%        \input{figures/architecture}
+%        \caption{...}
+%        \label{fig:architecture}
+%      \end{figure}
+%
+%  main.tex must load TikZ. Add to the preamble:
+%      \usepackage{tikz}
+%      \usetikzlibrary{arrows.meta, positioning, fit, backgrounds}
+%
+%  The design point the figure has to make, and the reason it is worth a
+%  page: three of the five stages are IDENTICAL code across all 27
+%  configurations, and only two vary. Shading carries that distinction, so
+%  a reader sees the experimental design before reading a word of Chapter 4.
+%=======================================================================
+\begin{tikzpicture}[
+  font=\small,
+  node distance=6mm,
+  fixed/.style={
+    draw=black!55, fill=black!4, rounded corners=2pt,
+    minimum height=13mm, text width=25mm, align=center, inner sep=2pt
+  },
+  varies/.style={
+    draw=orange!70!black, line width=0.7pt, fill=orange!12, rounded corners=2pt,
+    minimum height=13mm, text width=25mm, align=center, inner sep=2pt
+  },
+  lbl/.style={font=\scriptsize\itshape, text=black!60, align=center},
+  ax/.style={-{Stealth[length=2mm]}, draw=black!65}
+]
+
+% ---- the five pipeline stages, left to right
+\node[fixed]  (pre)  {Pre-\\processing};
+\node[varies] (disc) [right=of pre]  {Causal\\discovery};
+\node[fixed]  (base) [right=of disc] {Baseline\\fit};
+\node[fixed]  (score)[right=of base] {Online\\scoring};
+\node[fixed]  (attr) [right=of score]{Attribution};
+
+\foreach \a/\b in {pre/disc, disc/base, base/score, score/attr}
+  \draw[ax] (\a) -- (\b);
+
+% ---- what enters and what leaves
+\node[lbl] (in)  [left=5mm of pre]  {fault-free\\training data};
+\node[lbl] (out) [right=5mm of attr]{anomaly score\\+ ranked variables};
+\draw[ax] (in)  -- (pre);
+\draw[ax] (attr) -- (out);
+
+% ---- the second varying axis attaches to the baseline fit
+\node[varies, minimum height=8mm, text width=25mm] (reg) [below=9mm of base]
+  {Regression\\family};
+\draw[ax] (reg) -- (base);
+
+% ---- the three axes, annotated beneath
+\node[lbl] (a1) [below=5mm of disc]
+  {\textbf{Axis 1}\\PCMCI $\mid$ GES $\mid$ CAM-UV};
+\node[lbl] (a2) [below=4mm of reg]
+  {\textbf{Axis 2}\\linear $\mid$ poly-3 $\mid$ RBF};
+\node[lbl] (a3) at ($(pre.south)+(0,-16mm)$)
+  {\textbf{Axis 3}\\robotics $\mid$ ECG $\mid$ TEP};
+
+% ---- legend
+\begin{scope}[shift={($(attr.north)+(-6mm,12mm)$)}]
+  \node[fixed,  minimum height=4mm, text width=4mm] (lf) {};
+  \node[lbl, right=1.5mm of lf, align=left] {identical across all 27};
+  \node[varies, minimum height=4mm, text width=4mm] (lv) [below=1.5mm of lf] {};
+  \node[lbl, right=1.5mm of lv, align=left] {varies};
+\end{scope}
+
+\end{tikzpicture}

@@ -1,0 +1,4 @@
+Dataset,Model,Model Variant,F1,F1_std,AUC_ROC,AUC_std,AUC_PR,n
+Robotics (Pepper),Neural Baseline,LSTM Autoencoder,0.7972,0.0039,0.8804,0.0032,0.9002,155
+Robotics (Pepper),Neural Baseline,TCN Autoencoder,0.8053,0.0139,0.8856,0.0051,0.9164,155
+Robotics (Pepper),Neural Baseline,Transformer Autoencoder,0.7140,0.0195,0.8139,0.0158,0.8731,155

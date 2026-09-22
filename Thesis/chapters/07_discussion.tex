@@ -1,0 +1,151 @@
+%=======================================================================
+%  CHAPTER 7 -- DISCUSSION
+%=======================================================================
+\chapter{Discussion}
+\label{ch:discussion}
+
+%-----------------------------------------------------------------------
+\section{When Causal Structure Pays}
+\label{sec:disc-when}
+
+The central argument of this thesis is that causal anomaly detection is not universally superior to standard machine learning; its advantage is conditional on the character of the domain. Where an anomaly manifests as a large excursion in signal amplitude, a causal graph is unnecessary: a statistical threshold or a reconstruction autoencoder captures the deviation perfectly well. Where the anomaly is relational, with the variables remaining within their nominal ranges while the relationship between them breaks, structure becomes the deciding factor.
+
+The conditional advantage can be quantified rather than argued, using the parameter-free trivial control as the instrument. Its AUC-ROC measures how much of a domain's fault signature is pure amplitude. Set against the best causal configuration and the best tuned neural baseline in each domain, the relationship is monotone, as Table~\ref{tab:causal-advantage} and Figure~\ref{fig:conditional} show.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.78\textwidth]{fig_conditional_advantage.png}
+  \caption[The causal advantage against the trivial control's score]{The causal advantage against the trivial control's score. The horizontal axis is the parameter-free control's AUC-ROC, which indexes how much of a domain's fault signature is pure amplitude; the vertical axis is the margin of the best causal configuration over the best tuned neural baseline. The connecting line is drawn to make the ordering readable and is not a fit: three points cannot establish a trend, and the experiment that would test one is stated at the end of this section.}
+  \label{fig:conditional}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption[The causal advantage shrinks monotonically as the trivial control's score rises]{The causal advantage shrinks monotonically as the trivial control's score rises. All four columns are AUC-ROC, so higher is better throughout. The neural column is the best of the three tuned architectures in each domain: LSTM on Healthcare, TCN on Robotics and Industrial. Only the Healthcare row carries a bold cell, because it is the only one whose ordering survives the bootstrap intervals: on Robotics and on Industrial the neural score falls inside the causal configuration's interval, so the leading point estimate there is not a winner and is not marked as one.}
+\label{tab:causal-advantage}
+\begin{tabular}{lrrrr}
+\toprule
+Domain & Trivial $\uparrow$ & Causal $\uparrow$ & Neural $\uparrow$ & Causal $-$ Neural $\uparrow$ \\
+\midrule
+Healthcare & 0.6136 & \textbf{0.8114} & 0.7077 & $\mathbf{+0.1037}$ \\
+Robotics   & 0.8139 & 0.8752 & 0.8856 & $-0.0104$ \\
+Industrial & 0.9286 & 0.9151 & 0.9997 & $-0.0846$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On Healthcare the faults are overwhelmingly relational, the trivial control reaching only 0.6136, and the causal pipeline decisively outperforms the best neural architecture. On Robotics the fault character is mixed at 0.8139, and although the causal point estimate of 0.8752 trails the neural baseline at 0.8856, the two are not separable: the neural score falls well inside the causal configuration's bootstrap interval of $[0.7559, 0.9587]$. On Industrial the faults are heavily amplitude-driven at 0.9286, and the causal pipeline trails not only the neural baselines but the trivial control itself, 0.9151 against 0.9286, a method with no learned parameters at all. The interval test applied to Robotics a moment ago must be applied here too, and it cuts the same way: 0.9286 falls inside the causal configuration's bootstrap interval of $[0.8880, 0.9394]$, so this ordering is no more separable than that one. What the evidence supports on Industrial is the absence of a causal advantage, not a decisive victory for the control. The argument of this section needs only the weaker claim: a structural method that cannot be distinguished from a parameter-free threshold has not earned its cost, whether or not it is strictly beaten by it.
+
+The mechanism proposed for the Healthcare result is the sparse structural constraint. It has to be stated precisely, because the three-parent cap already restricts every regression to a small parent set whatever graph produced it, so smallness alone cannot be what separates the algorithms. What separates them is whether the discovery step chooses those parents or merely supplies a pool from which a lag-ordered tiebreak chooses them: GES offers 3.78 candidates per lead and the cap barely binds, while PCMCI offers 12.42 and the cap discards three quarters of them. On that reading the sparse graph limits fitting to superficial variance because it, not an arbitrary rule, determines what the regression sees. As established in Section~\ref{sec:density}, however, that evidence supports the mechanism on Healthcare alone. Density there is confounded with discovery sample size, and the relationship between sparsity and performance reverses outright on Industrial. The mechanism is offered as the best available explanation of one domain, not as a general law.
+
+The falsifiable form of the claim is therefore this: the advantage of a structural causal detector over a magnitude-based detector shrinks as the trivial control's AUC-ROC rises. All three domains evaluated here are consistent with it, and three points do not establish a trend. A genuine test would require twenty or thirty domains, plotting the causal advantage against the trivial score. The barrier is not effort but data: each domain requires continuous multivariate observations with a verified fault-free period and faults whose ground truth is known, and that combination remains rare among public benchmarks. Stating the test that would refute the hypothesis, and why it cannot yet be run, is more useful than asserting the hypothesis on three points.
+
+\section{Why the Algorithm Ranking Is Unstable}
+\label{sec:disc-ranking}
+
+Where the top two configurations in a domain share an algorithm they also share an evaluation sample set, and DeLong's test separates them: GES linear from GES polynomial on Healthcare at $p = 0.001119$, and PCMCI with RBF features from PCMCI polynomial on Robotics at $p = 0.000077$. What cannot be tested is the comparison this section is actually about. On Industrial the runner-up belongs to a different algorithm, and because PCMCI subsamples at a different rate from GES the two do not score the same observations, so no paired test exists. The regression-variant ranking within an algorithm is therefore established; the algorithm ranking across a domain is not. What follows is an interpretation of an empirical ordering, not an explanation of a demonstrated one.
+
+PCMCI takes the highest score on Industrial. Through the ParCorr test it assumes linear relations while handling autocorrelation natively, by conditioning on past states and not treating observations as independent. That assumption matches the continuous, strongly autocorrelated fluid and thermal dynamics of the Tennessee Eastman Process.
+
+GES takes the highest score on Healthcare. Because it scores an equivalence class and does not privilege temporal order, it suits data in which an electrical event registers across several leads at once. The explanation carries a caveat that cannot be omitted. The eight-lead ablation reduced GES from 0.8114 to 0.7418 when the algebraically dependent leads were removed. GES is well suited to recovering exact, instantaneous linear identities, and that is precisely the difficulty: a substantial part of the structure it exploited was Einthoven's algebra rather than cardiac physiology. The algorithm was doing what it is good at, on relations that were arithmetic, not biological.
+
+PCMCI's own graph on this domain points the same way, and here the lag is genuinely discovered, not a pipeline convention: as Section~\ref{sec:setup-lag} reports, every parent PCMCI's Healthcare regressions retain after the three-parent cap is contemporaneous rather than lagged. That is consistent with the same physiology, since a limb-lead identity holds between simultaneous voltages and not ones separated in time. It is also why a search free to place a parent at any lag from zero to three places it at zero almost without exception on this domain specifically.
+
+CAM-UV never takes the highest score in any domain, and its two failure modes are quantified and not supposed. Table~\ref{tab:confounder} in Appendix~\ref{app:confounders} reports both across the three domains. On Robotics it saturates: 80.7\% of all variable pairs are assigned to the latent confounder set, leaving no observed-parent edges at all, so the structural constraint that is supposed to do the work is absent. On Industrial it starves, with 0.67 samples per variable, far below the 200-sample floor at which the confounder ablation found recovery never to succeed under any significance level.
+
+\section{Structure Recovery Versus Detection Performance}
+\label{sec:disc-structure}
+
+The methodological takeaway of this evaluation is that downstream detection performance cannot validate an upstream causal graph. A high AUC-ROC does not imply the discovered structure is physically accurate, and a structurally flawed graph does not preclude competitive detection. Three pieces of evidence establish the disconnect.
+
+First, density can actively degrade discrimination. On Healthcare, PCMCI constructs a saturated graph at 95.5\% density and achieves the lowest causal score in the domain, 0.7147. GES constructs a far sparser graph at 51.5\% and takes the highest, 0.8114. A denser capture of statistical dependency harmed the detector rather than helping it.
+
+Second, a structurally empty graph can still detect competitively. On Robotics, CAM-UV produces a graph 80.7\% saturated with latent confounder pairs and containing no observed-parent edges whatsoever. Despite that, its best variant reaches 0.7818, above every GES configuration in the domain, which range from 0.5906 to 0.6999. A graph carrying no observed structure at all detected faults better than a formally sparse one.
+
+Third, and most consequentially, attribution can succeed on a graph that lacks the relevant structure entirely. During the \texttt{LedsControl} attack the variable the documented requirement names, \texttt{TabletTouchX}, sits at rank 78 of 249 by standardised deviation: it is emphatically not the sensor that moved most. The causal attribution ranks it first in 9 of 9 configurations, and it does so including in the six configurations whose graphs exclude every LED channel, so no LED-to-tablet relation can be represented in them at all. The attribution succeeds despite the graph missing the structure that would appear to explain it.
+
+The conclusion is uncomfortable but hard to avoid: a pipeline reporting only an AUC-ROC provides no evidence that its discovered structure is physically meaningful. The claim can be put in testable form. Two graphs built on incompatible structural premises can produce detection scores that are indistinguishable. On Industrial, a CAM-UV graph whose sparsity is an artefact of 35 samples for 52 variables scores 0.8922 against 0.8994 for a GES graph at 3.2\% density, so the metric has no power to discriminate between them. The anomaly score measures the capacity of the regression filter downstream of the graph; it does not validate the discovery upstream of it.
+
+\section{Explainability Without Ground-Truth Attribution}
+\label{sec:disc-xai}
+
+The claim of this section is that the causal pipeline changes what attribution reports. It names the variable whose modelled relationship broke instead of the one that moved furthest.
+
+The evaluation has something uncommon in explainability research: a ground truth. Because the dataset documents which subsystem each injected attack targets, the attributions can be scored against a known answer rather than against a human judgement of plausibility. Most attribution evaluation lacks this and is reduced to asking whether an explanation looks reasonable.
+
+Against that ground truth the causal attribution names the correct subsystem in 9 of 9 configurations for \texttt{LedsControl}, returning \texttt{TabletTouchX}, and in 8 of 9 for \texttt{JointControl}, returning \texttt{KneePicthTemp}. Neither is the sensor that moved most. During \texttt{LedsControl} the tablet channel sits at rank 78 of 249 by standardised deviation, far below the LED channels themselves; during \texttt{JointControl} the knee temperature sits at rank 4, below \texttt{RShoulderPitch} at rank 1. A detector ranking by magnitude would return neither. The post-hoc SHAP attribution over the neural baselines, by contrast, satisfies the LED requirement in 2 of 3 architectures and the joint requirement in none, all three naming \texttt{RShoulderPitch}, which is precisely the variable that moved most.
+
+The most valuable result here is not the 9 of 9 but the 8 of 9. The single failure, PCMCI with polynomial features returning \texttt{WheelBStiff}, establishes that the check is capable of failing. A test that always passes distinguishes nothing, and without that miss the seventeen successes would be indistinguishable from a metric that returns the target by construction. The failure is what makes the rest evidence.
+
+Two qualifications keep the comparison honest. The first is that it is structural, not like-for-like: the causal attribution reads coefficient drift from a recursive least squares filter while the neural attribution computes SHAP values over a reconstruction error, so what is compared is two pipelines instead of two attribution methods applied to a common model. The second is narrower and sharper. As established in Section~\ref{sec:method-attribution}, the \texttt{JointControl} result depends on the raw $L_2$ ranking retained for parity with the reference implementation. Under the baseline-normalised rule used in the other two domains the same data returns \texttt{LedEarR3} and \texttt{LedEarL3}, and the result would have been a failure. The attribution is therefore correct under the metric this domain uses, and the metric is not neutral.
+
+A third qualification is the most important, because the two faults discussed
+here are the two on which the causal attribution looks strongest, and they are
+two of the forty-three anomaly classes this work scores, and two of the
+twenty-two that carry a documented cause to score against. Section~\ref{sec:attribution}
+repeats the comparison across all of them in the three domains, against the
+documented cause of each, and the ordering does not survive: post-hoc attribution
+over the neural baselines is nowhere less relevant than the intrinsic causal
+attribution, once the comparison is restricted to methods ranking pools of the
+same size. That restriction is not a convenience: GES ranks nine of the twelve
+leads and CAM-UV 35 of the 244 robot sensors, so a raw percentage difference
+against either mixes a smaller search space into what looks like a method
+difference. How much of any of this is demonstrated rather than merely observed
+is settled in Section~\ref{sec:attr-intervals}, and the answer is one comparison
+of the nine made at that depth. The robot's three attack classes and the
+plant's five documented actuators cannot reach the 5\% level whatever the numbers
+are, so neither domain decides anything; on the electrocardiogram, where fourteen
+classes do support a test, the only separation at the depth this thesis reports
+attribution at is SHAP over PCMCI, and it survives correction for the three
+comparisons made within that domain. The LED and joint
+results above are real, they are the cases the documented requirement was written
+around, and they are not representative. What the causal side retains at the scale
+of the full evaluation is narrower and is stated there: on the electrocardiogram
+its configurations agree with one another about the specific record in front of
+them, where the neural architectures return something close to a fixed ranking of
+the leads.
+
+\section{Threats to Validity}
+\label{sec:disc-threats}
+
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Threats to validity, their severity and what bounds them.}
+\label{tab:threats}
+\begin{tabularx}{\textwidth}{@{}p{0.31\textwidth} l X@{}}
+\toprule
+Threat & Severity & Mitigation \\
+\midrule
+Scoring resolution differs by algorithm & High & Bounded by ablation; equalising is infeasible in one direction \\
+Ridge penalty varies by variant on Robotics & Moderate & Identical across algorithms in every cell, so RQ1 is unaffected \\
+One run per causal configuration; CAM-UV not reproducible & Moderate & Bootstrap intervals over real per-sample scores; three seeds for the neural baselines \\
+One dataset per domain & Moderate & Stated; the strongest result depends on an unusually favourable structure \\
+Injected rather than naturally occurring faults & Moderate & Ground truth is available in exchange, which is what permits the attribution evaluation \\
+Prevalence varies from 0.5717 to 0.9524 & Low & AUC-ROC is prevalence-independent and is used as the primary metric \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Table~\ref{tab:threats} summarises the threats, their severity and what bounds each; the subsections below take the most consequential in turn.
+
+\subsection{Internal validity}
+
+The most severe threat is the scoring resolution mismatch, and it is stated first because an examiner meets it immediately. PCMCI subsamples at 74, 7 and 1 across the three domains where GES and CAM-UV are fixed at 10, so within a domain the three algorithms do not score the same series. Two ablations bound the effect without removing it: forcing PCMCI on Robotics to rate 10 drops it from 0.8752 to 0.6813, and forcing GES on Healthcare to rate 1 drops it from 0.8114 to 0.6184. Equalising the rate is not available in one direction, since a 160-variable GES run did not converge in 66 minutes of CPU. The consequence for interpretation is stated plainly: RQ1 compares each algorithm as it is intended to be applied, preprocessing included, and does not isolate the discovery step.
+
+The second is the ridge penalty, which varies by regression variant on Robotics to keep the polynomial and random-feature design matrices numerically conditioned. It is fully mitigated for RQ1, since the penalty is identical across all three algorithms within every cell, and partially confounds RQ2 on that domain alone.
+
+The third is reproducibility. Each causal configuration was run once, and CAM-UV is not exactly reproducible between runs. The mitigation is that uncertainty is quantified from the real per-sample scores through a moving-block bootstrap instead of from repeated runs, and the neural baselines are averaged over three seeds.
+
+\subsection{External validity}
+
+Three domains with one dataset each is a narrow base, but the sharper threat concerns the strongest result specifically. The Healthcare advantage depends on the twelve ECG leads satisfying exact algebraic identities, and the eight-lead ablation shows how much of it that structure supplied. Exact linear relations among observed variables are a favourable case that will not generally be present in noisy field data, so the result should not be read as a general claim about biological signals.
+
+\subsection{Construct validity}
+
+The robotics faults are injected, and the industrial faults are simulated. The healthcare classes are not: each one is a real recorded ECG carrying a clinician-assigned diagnosis. That is a genuine limitation, and it purchases the ground truth without which the attribution evaluation in Section~\ref{sec:disc-xai} would not be possible at all. The 95th-percentile threshold is a design choice and not a derived optimum; it is defensible because it is applied identically everywhere and never consults an anomaly label, not because 95 is correct. And AUC-PR is not comparable across domains, since prevalence ranges from 0.5717 on Healthcare to 0.9524 on Industrial; AUC-ROC is prevalence-independent and is used as the primary metric throughout for that reason.
+
+\subsection{Statistical conclusion validity}
+
+Two of the 27 configurations cannot be distinguished from chance. GES with linear features on Robotics reaches 0.5906 with an interval of $[0.4873, 0.6761]$, and PCMCI with polynomial features on Healthcare reaches 0.5075 with an interval of $[0.4429, 0.5663]$, the latter sitting almost exactly on chance, not merely overlapping it. Beyond this, and as established in Section~\ref{sec:disc-ranking}, cross-algorithm comparisons admit no paired test, because the subsample policy means PCMCI does not score the same observations as GES or CAM-UV. With a single run per cell there is also no within-cell variance, so no formal test of the algorithm-by-regression interaction is available.
