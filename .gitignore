@@ -10,3 +10,6 @@ __pycache__/
 
 # Local agent config, not part of the project
 .claude/
+
+# Run logs
+*.log

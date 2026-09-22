@@ -1259,7 +1259,7 @@ def t_relevance():
         "class, so lift is the factor by which a method beats random selection. SHAP is "
         "computed on all three datasets, over the same anomaly classes the causal "
         "pipeline is scored on. Classes with no documented cause are excluded rather "
-        "than guessed at, and the Cls.\\ column is how many survive that exclusion: the robot laboratory defines three attacks, "
+        "than guessed at, and the Cls.\\ column is how many survive that exclusion: the robotics dataset defines three attacks, "
         "the industrial specification documents an actuator for five of its twenty "
         "faults, and fourteen of the twenty cardiac classes localise to lead territory. "
         "Those are the sample sizes this section rests on. The interval is a cluster "
