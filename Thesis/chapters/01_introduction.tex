@@ -1,0 +1,88 @@
+%=======================================================================
+%  CHAPTER 1 -- INTRODUCTION
+%=======================================================================
+\chapter{Introduction}
+\label{ch:introduction}
+
+\section{Motivation}
+\label{sec:motivation}
+
+Modern operational environments produce continuous, multivariate sensor streams. Whether the subject is the kinematic state of a humanoid robot, the physiological signals of a patient, or the thermodynamic state of a chemical plant, operators depend on those streams to know when the system has departed from normal behaviour. Two difficulties motivate this thesis, and they are separable: detecting that something has gone wrong, and saying what.
+
+The first is detection. The prevailing paradigm for time-series anomaly detection evaluates signal magnitude, searching for excursions beyond expected bounds~\cite{chandola2009survey,blazquezgarcia2021review}. Contemporary practice pursues the same target with neural models, among them recurrent, convolutional and attention-based autoencoders that reconstruct a window and flag it when the reconstruction error is large~\cite{malhotra2016lstmad,su2019omnianomaly,audibert2020usad}. But the quantity being watched is still the size of a deviation. That rests on a physical assumption which is frequently false: that a fault necessarily produces a large deviation in some individual variable. Many faults instead present as relational drift, in which every variable remains inside its nominal range while the relationship between them breaks. Electrocardiography supplies a concrete case. The limb leads satisfy Einthoven's identity~\cite{malmivuo1995bioelectromagnetism}, lead III being the difference of leads II and I, and a cardiac event may disturb that identity while leaving each lead within its usual amplitude. A detector examining each lead independently observes three normal signals and reports nothing.
+
+The second motivation is explainability. A deep autoencoder that flags a window does so by returning a reconstruction error aggregated over a latent vector, and it has no vocabulary for saying which physical mechanism failed: the output is that something, somewhere in the monitored system, looks unusual. An operator receiving that alert still has to diagnose the fault unaided. A detector whose internal state is instead a set of coefficients, each attached to a named relationship between two measured variables, can say which of those relationships stopped holding, naming a candidate mechanism to inspect, not only a moment at which to start looking.
+
+\section{Problem Statement and Methodology Overview}
+\label{sec:problem}
+
+This thesis addresses the following problem. Given a multivariate series $X(t) \in \mathbb{R}^n$, where $n$ is the number of monitored variables and each component is one sensor channel sampled over time, observed under normal operation, learn a model of normal structural behaviour; given a new window, produce a per-timestep anomaly score measuring departure from that structure, and rank the monitored variables by their contribution to it.
+
+\subsection{Causal structure and causal discovery}
+\label{sec:intro-causal}
+
+The structure this thesis models is causal. A causal structure over the monitored variables is a directed graph in which an edge from $X^i$ to $X^j$ asserts that $X^i$ is one of the quantities directly setting the value of $X^j$, not merely a quantity that moves with it. The variables with an edge into $X^j$ are called its \emph{parents}, written $\mathcal{P}(X^j)$, and they are the inputs to the mechanism producing $X^j$. In a time series a parent may be simultaneous with its child or precede it by some number of steps, so an edge carries a lag as well as a direction.
+
+Causal discovery is the task of recovering that graph from observational data alone, without intervening on the system, which for a patient monitor or a running chemical plant is the only option available. Different families of algorithm recover it by different means, and they disagree about what makes a causal relation identifiable in the first place; Chapter~\ref{ch:related} places the families in their literature and Chapter~\ref{ch:background} states the mechanics of the three used here.
+
+The parent set is what makes structure useful for detection. Knowing $\mathcal{P}(X^j)$ licenses modelling $X^j$ as a function of its parents alone rather than of every other variable, and a fault then shows up as that function changing, as the mechanism breaking, and not as any single variable leaving its range.
+
+\subsection{The detection pipeline}
+\label{sec:intro-pipeline}
+
+Everything in this thesis is built on a three-stage pipeline, and the evaluation cannot be read without it:
+
+\begin{enumerate}
+  \item \textbf{Discover.} A causal discovery algorithm is run on the fault-free portion of the recording and returns, for each variable, its parent set.
+  \item \textbf{Regress.} Each variable is regressed on its parents. This fits one coefficient vector per variable, describing the mechanism that produces it. The fit is made twice: once offline on fault-free data, giving a reference vector, and once online as the evaluation data arrives, giving a vector that tracks continuously.
+  \item \textbf{Evaluate the coefficients.} The anomaly score is the departure of the tracked coefficients from the fault-free reference. A large departure means a modelled relationship has stopped holding. Because each coefficient belongs to a named relationship, the same quantity ranks the variables and so yields the attribution.
+\end{enumerate}
+
+What is scored is therefore the drift of the model's coefficients, not the size of the residual it leaves. Chapter~\ref{ch:methodology} gives the mechanism in full and states why coefficient drift and residual magnitude are not interchangeable.
+
+\subsection{The three axes of the evaluation}
+\label{sec:intro-axes}
+
+With the pipeline fixed, the evaluation varies it along three axes. The first two belong to the method. The third is the data the method is applied to, and Chapter~\ref{ch:methodology} keeps that distinction because it governs what a difference between two cells can be attributed to. The three are:
+
+\begin{enumerate}
+  \item \textbf{Causal discovery algorithm:} the method that determines each variable's parent set, and so the first stage of the pipeline.
+  \item \textbf{Regression family:} the functional form mapping that parent set to the target in the second stage, linear or one of two non-linear expansions, since assuming linear causal relations is itself a modelling commitment worth testing.
+  \item \textbf{Application domain:} the physical system generating the series. This one changes what enters the pipeline and nothing inside it.
+\end{enumerate}
+
+For differences in detection performance to be attributable to the causal discovery algorithm and its interaction with the regression family, everything downstream of the discovered graph must be held constant. That constraint is enforced programmatically rather than asserted: a suite of 17 automated checks runs on every build and verifies that the recursive least squares update, the coefficient drift score, the attribution depth and a label-blind thresholding rule are identical across all configurations. What is \emph{not} held constant is stated where it arises: the subsampling rate and the variable inclusion cap are properties of each algorithm's own workflow, and Chapter~\ref{ch:discussion} quantifies what that costs.
+
+\section{Research Questions}
+\label{sec:rqs}
+
+The grid is instantiated with three causal discovery algorithms, one drawn from each family the taxonomy of Chapter~\ref{ch:related} identifies: PCMCI, which tests conditional independence; GES, which scores equivalence classes against a penalised likelihood; and CAM-UV, which assumes a functional form and also flags variable pairs it attributes to an unobserved common cause. Each is crossed with three regression families, linear, a degree-three polynomial expansion, and a random Fourier approximation to a radial basis function kernel, so that the linearity assumption is relaxed in turn and not assumed throughout.
+
+The three domains differ deliberately in scale and in physical character. The cyber-physical domain is telemetry from a SoftBank Pepper humanoid robot, the largest at 244 monitored variables after preprocessing, carrying documented injected attacks on the LED, joint and wheel subsystems. The healthcare domain is the PTB-XL electrocardiogram corpus at 12 leads, four of which are exact linear combinations of the others, which makes it the case where relational structure is known to exist. The industrial domain is the Tennessee Eastman process at 52 variables, where faults are large amplitude excursions. Chapter~\ref{ch:experimental_setup} describes all three in detail. Four research questions structure the evaluation over that grid; Chapter~\ref{ch:results} reports the measurements bearing on each, and Chapter~\ref{ch:conclusion} states the answers.
+
+\begin{description}[leftmargin=1.6cm,style=nextline,font=\bfseries]
+  \item[RQ1] Which causal discovery algorithm yields the most effective anomaly detection under a unified protocol, and is that ranking stable across application domains?
+  \item[RQ2] Does the capacity of the regression family interact with the choice of causal discovery algorithm, or do the two axes contribute independently?
+  \item[RQ3] Do causal detectors outperform non-causal neural baselines of comparable capacity, and under what conditions?
+  \item[RQ4] Are the variable attributions produced by coefficient drift physically meaningful, in the sense of identifying the variable whose modelled relationship broke, and thus the root cause of the anomaly, not the variable that deviated most?
+\end{description}
+
+One measurement reported in Chapter~\ref{ch:results} answers none of these directly and is not raised to a question of its own. CAM-UV alone returns a second output, the set of variable pairs it attributes to an unobserved common cause, and what that set contains turns out to explain much of how CAM-UV places in the comparison above. It is therefore reported in Appendix~\ref{app:confounders} as evidence bearing on the behaviour of one of the three algorithms, and not as an independent line of enquiry.
+
+\section{Contributions}
+\label{sec:contributions}
+
+Three contributions follow, and they report what the evaluation measured and not what it set out to establish.
+
+\begin{description}[leftmargin=1.2cm,font=\bfseries]
+  \item[C1] A systematic evaluation of causal discovery algorithms and regression assumptions for anomaly detection over high-dimensional data. Twenty-seven configurations, three algorithms crossed with three regression families across three domains of 244, 52 and 12 variables, differ only along those declared axes, with everything downstream of the graph held constant and that uniformity enforced by automated checks on every build rather than asserted.
+  \item[C2] An assessment of the accuracy against explainability tradeoff. The detection advantage of causal structure is conditional and the condition is measurable in advance: it shrinks monotonically as the score of a parameter-free control rises, and vanishes where faults are pure amplitude excursions. Explainability does not follow the same curve. Attribution identifies the variable whose modelled relationship broke in 9 of 9 configurations for one documented fault and 8 of 9 for another, including configurations whose graphs cannot represent the relation that would account for the answer, so the explanatory value of the causal framing survives in domains where its detection advantage does not. Scored across every anomaly class instead of those two, and between methods ranking pools of the same size, the intrinsic attribution is no more relevant than post-hoc attribution over the neural baselines, and what survives the wider scoring is stated where it is measured.
+  \item[C3] A comparison against state-of-the-art neural architectures for anomaly detection, covering both detection and explanation. Three tuned deep autoencoders and a parameter-free control are evaluated under the identical label-blind protocol, and post-hoc SHAP attribution over those baselines is set against the intrinsic causal attribution on the same anomaly classes in all three domains, and scored against the documented cause of each. The comparison did not come out in favour of the causal side, and Chapter~\ref{ch:results} reports it as measured.
+\end{description}
+
+Two further findings emerged from the evaluation instead of being sought by it, and they qualify the approach without recommending it. Detection performance cannot validate a discovered causal graph, since a graph carrying no observed-parent edges detected competitively and graphs built on incompatible premises produced indistinguishable scores. And treating the subsampling rate as a property of each algorithm forecloses cross-algorithm significance testing entirely, leaving 54 of 108 within-domain comparisons formally unpairable. Both are reported where they arise without being claimed as contributions.
+
+\section{Thesis Structure}
+\label{sec:structure}
+
+The literature review in Chapter~\ref{ch:related} separates classical statistical process control from the modern reconstruction models, and places this evaluation within the taxonomy of causal discovery. Chapter~\ref{ch:background} then sets out the formalisms the pipeline uses, and only those. The pipeline itself is the subject of Chapter~\ref{ch:methodology}, which declares the axes of the evaluation along with what is held constant and what is not; the datasets, the fault characteristics and the protocol follow in Chapter~\ref{ch:experimental_setup}. Measurements are reported in Chapter~\ref{ch:results} and interpreted in Chapter~\ref{ch:discussion}, which also states the conditional advantage and the threats to validity. Chapter~\ref{ch:conclusion} answers the research questions and says what follows from them.

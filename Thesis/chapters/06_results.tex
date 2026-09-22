@@ -1,0 +1,357 @@
+\chapter{Results}
+\label{ch:results}
+
+\section{Headline comparison}
+
+RQ1 asks which causal discovery algorithm gives the most effective anomaly detection under one shared protocol, and whether that ranking holds from one application domain to the next. Table~\ref{tab:main-results} presents the headline anomaly detection performance across 27 distinct causal discovery configurations, structured along three primary axes: the dataset domain, the underlying causal discovery algorithm, and the applied regression variant.
+\input{tables/tbl_main_results}
+
+No single detection paradigm wins across all three domains. Which one is ahead depends on the domain, and that dependence is the result rather than a complication of it. In the cyber-physical Robotics domain, the tuned neural baseline attains a higher point estimate than the optimal causal configuration (AUC-ROC 0.8856 versus 0.8752), although Section~\ref{sec:uncertainty} shows this ordering is not supported once sampling uncertainty is accounted for. In the Industrial domain the deep learning architectures win outright (AUC-ROC 0.9997), and the parameter-free trivial control also scores above the best causal pipeline (0.9286 versus 0.9151), an ordering Section~\ref{sec:uncertainty} likewise shows to be inseparable. The biological Healthcare domain is where the causal approach holds up: the causal pipeline achieves an AUC-ROC of 0.8114 against the tuned neural baseline (0.7077) and the trivial control (0.6136). This ordering rests on point estimates alone, since the causal and neural pipelines score different sample sets and therefore admit no paired significance test.
+
+Table~\ref{tab:main-results} also carries the measurement RQ2 asks for, which is the second axis read down the columns, not across the rows. Of the nine algorithm--domain cells the RBF feature map takes five, the linear map two and the degree-three polynomial two. No variant dominates, and the pattern is not a property of the domain either: GES prefers a different variant in each of the three domains, taking the polynomial on robotics, the linear map on healthcare and RBF on industrial. Which regression family performs best therefore cannot be stated without naming both the algorithm and the domain, and the interaction is reported here rather than resolved. With one run per cell there is no within-cell variance and so no formal test of it, as Section~\ref{sec:disc-threats} records.
+
+\subsection{Per-domain detail}
+\label{sec:per-domain}
+
+Precision, recall, F1 and AUC-ROC for every configuration on the cyber-physical Robotics domain are set out in Table~\ref{tab:detail-robotic}.
+\input{tables/tbl_detail_robotic}
+
+AUC-ROC and F1 disagree in this study because they answer different questions. AUC-ROC evaluates ranking across all possible thresholds, whereas F1 is reported at a single operating point: the 95th percentile of the fault-free score distribution, fixed before any attack label is seen.
+
+The consequence is visible in the per-domain tables. Because the threshold fixes the false-positive rate at 5\% by construction, precision is nearly constant across all nine robotics configurations, ranging only from 0.9051 to 0.9528, while recall varies by a factor of two, from 0.3217 to 0.6814. F1 therefore moves almost entirely through recall, and reflects how well each score distribution happens to align with that particular cut-off and not how well the model ranks.
+
+Seven rank inversions follow. The strongest configuration by AUC-ROC, PCMCI with RBF features at 0.8752, is marginally beaten on F1 by CAM-UV with RBF features at 0.7818, a configuration 0.093 lower in ranking ability. PCMCI linear/ridge, at 0.7825, loses on F1 to GES with RBF features at 0.6516, a gap of 0.13.
+
+This is the intended cost of refusing to fit the threshold to test labels. F1 is reported as an achievable operating point, not a maximum, and AUC-ROC is treated as the primary measure of discriminative ability throughout.
+
+The corresponding metrics for the biological Healthcare domain, over all twelve standard leads, are in Table~\ref{tab:detail-healthcare}. The eight-lead ablation is reported separately in Section~\ref{sec:eight-lead-ablation}.
+\input{tables/tbl_detail_healthcare}
+
+The divergence between AUC-ROC and F1 described above for Table~\ref{tab:detail-robotic} applies identically here, and for the same reason: the operating point is fixed by the fault-free distribution rather than chosen to maximise F1.
+
+For the Industrial domain the complete configuration breakdown is Table~\ref{tab:detail-industrial}.
+\input{tables/tbl_detail_industrial}
+
+The same qualification applies. Note also that this evaluation set carries a 95.24\% anomaly prevalence, so AUC-PR is inflated by the class balance and threshold-independent AUC-ROC should be preferred when comparing configurations on this domain.
+
+\section{Uncertainty}
+\label{sec:uncertainty}
+
+To account for the autocorrelation inherent in time-series data, uncertainty is quantified using a moving-block bootstrap and not the analytical Hanley--McNeil interval~\cite{hanley1982roc}. An i.i.d. resample destroys serial dependence and produces artificially narrow intervals, whereas the block bootstrap preserves temporal dynamics and yields honest confidence bounds.
+
+Figure~\ref{fig:forest} plots all 27 intervals at once, which is what makes the argument of this section legible: the extent to which the intervals overlap is a property of the whole set and not of any row in it. Where an exact bound is wanted, Table~\ref{tab:bootstrap} in Appendix~\ref{app:full-results} lists every interval, with the analytical Hanley--McNeil bounds beside it for comparison.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.86\textwidth]{fig_bootstrap_forest.png}
+  \caption[Bootstrap intervals for all 27 causal configurations]{Bootstrap intervals for all 27 causal configurations, grouped by domain. Two intervals cross the chance line: PCMCI with polynomial features on healthcare, which sits almost exactly on it, and GES with linear features on robotics. The widest intervals in the study belong to PCMCI on robotics, which is also where its highest point estimate sits: 181 scored samples against 1{,}378 for the other two algorithms in that domain.}
+  \label{fig:forest}
+\end{figure}
+
+Accounting for sample uncertainty via moving-block bootstrapping reveals that strict hierarchical rankings within the Robotics domain are statistically unsupported. The optimal causal configuration (PCMCI-RBF, AUC-ROC 0.8752) exhibits a wide 95\% confidence interval of [0.7559, 0.9587]. This interval, spanning 0.203, entirely encompasses the tuned neural baseline and heavily overlaps with multiple subsequent causal configurations. The sample size behind that interval is the reason, and it is a property of the configuration rather than of the domain: PCMCI scores robotics at its own coarser resolution and is therefore evaluated over 181 samples, where GES and CAM-UV are evaluated over 1{,}378. The widest intervals in the domain are consequently PCMCI's, and the configuration with the highest point estimate is also the one whose estimate is least precisely known. These models cannot be definitively ranked by point estimates alone. The intervals also expose configurations whose performance cannot be separated from chance, such as GES-Linear, whose interval of [0.4873, 0.6761] crosses 0.5.
+
+The same test must be applied to the comparisons that run against this thesis as well as to those that run for it, and on the Industrial domain it changes what may be claimed. The parameter-free control scores 0.9286 there against 0.9151 for the best causal configuration, but that configuration's interval is $[0.8880, 0.9394]$ and the control's score falls inside it; the two also score different numbers of samples, so no paired test is available either. The control is therefore not shown to beat the causal pipeline on Industrial. What is shown is that the causal pipeline cannot be distinguished from a method with no learned parameters, which is the weaker statement and the one Section~\ref{sec:disc-when} relies on. By contrast the neural baselines at 0.9997 sit well outside that interval, so that ordering is separable and is reported as such.
+
+It is critical to note, however, that overlapping confidence intervals are a weaker measure of separability than paired testing. While interval overlap indicates high marginal variance, paired significance testing via the DeLong method demonstrates that specific configurations on a shared sample set remain statistically distinct (PCMCI-RBF versus PCMCI-Linear, $p = 0.000011$), confirming that paired tests are required to evaluate model modifications measured on identical data.
+
+Table~\ref{tab:delong-summary} reports what that test can and cannot reach across the whole grid. Each domain contributes 36 within-domain pairs, and exactly half of them are testable: a pair fails whenever PCMCI is on exactly one side of it, because PCMCI subsamples at its own rate and the two configurations then score different observations. Two PCMCI configurations share a sample set with each other and are testable, which is why the paragraph above can report one. The split is 54 testable against 54 unpairable, identically in all three domains, and it is not a property of the data but of the decision to treat the subsampling rate as belonging to each algorithm. Of the 54 that can be tested, 41 separate at the 5\% level, so the instrument is not weak where it applies; it simply does not reach the comparison RQ1 asks for. The full set is given as Table~\ref{tab:delong-full}.
+
+\input{tables/tbl_delong_summary}
+
+\section{Comparison against baselines}
+\label{sec:baselines}
+
+This section reports the measurements bearing on RQ3, which asks whether causal detectors outperform non-causal neural baselines of comparable capacity, and under what conditions. The parameter-free control is reported alongside them, because the condition turns out to be legible in its score. Table~\ref{tab:baselines} details the performance of the three deep learning autoencoders (LSTM, TCN and Transformer) following domain-specific hyperparameter tuning, alongside the parameter-free trivial statistical control. All models operate under the identical 95th-percentile label-blind decision rule.
+
+The baselines are reported at a coarser grain than the causal configurations, and the reason is a matter of what was kept. Each autoencoder figure is a mean AUC-ROC over three seeds with its standard deviation, so Table~\ref{tab:baselines} gives no counterpart to the per-configuration confusion matrices of Section~\ref{sec:per-domain}: the per-seed true and false positive counts were not retained when the runs were aggregated, and they are not reconstructed here from the summary statistics that were.
+
+One asymmetry in that protocol has to be declared, because it bears on the comparison the healthcare column is used to make. The autoencoders take their variable set and their scoring resolution from PCMCI's cached graph in every domain. On robotics and industrial that is also the resolution of the best causal configuration, so those columns compare like with like. On healthcare it is not: the strongest causal result is GES's, obtained at a coarser subsampling rate, so the fault-free recording yields 7{,}143 samples at the resolution the baselines work in and 5{,}000 at the one GES works in. The variable set is identical, all twelve leads in both cases, so the difference is one of resolution alone. Its direction is worth stating explicitly, since it runs against the thesis and not for it: the healthcare baselines are trained and evaluated on more data than the causal configuration they are compared against, so the causal margin reported in that column is measured against a better-resourced opponent, not a handicapped one. Table~\ref{tab:baseline_parity} sets out what each side was given in each domain, so that the declaration can be checked rather than taken on trust.
+\input{tables/tbl_baselines}
+
+\input{tables/tbl_baseline_parity}
+
+The trivial statistical baseline, which has no learned parameters at all, reaches an AUC-ROC of 0.9286 on the Industrial dataset, above the point estimate of the optimal causal configuration (0.9151). That ordering should be read as the absence of a causal advantage instead of as a separation, because 0.9286 lies inside the causal configuration's bootstrap interval of $[0.8880, 0.9394]$, reported as Table~\ref{tab:bootstrap} in Appendix~\ref{app:full-results}, and the two score different sample counts so no paired test is available either. TEP faults appear as large, abrupt changes in amplitude. When a component fails the deviation in the raw signal is big enough that a z-score finds it, and a causal graph has nothing to add to a fault that is already visible one channel at a time. One limitation of this evaluation set bears on how the figure should be read: its anomaly prevalence is 95.24\%, and at that imbalance a threshold-dependent metric describes the prevalence more than the detector, which is why AUC-ROC is the one quoted.
+
+Biological ECG data behaves the other way round. A cardiac anomaly often changes the synchronisation between leads without producing a large voltage spike, so the amplitude stays inside its normal range and the trivial baseline misses it (0.6136) while the relationships between leads have already broken, which the causal pipeline picks up (0.8114). The density of the healthcare causal graphs is consistent with this reading, since the sparser the graph, the better that algorithm scored across all three. Section~\ref{sec:density} shows, however, that density is entangled on this domain with the number of observations each algorithm performs discovery on, so the ordering is reported there as a correlate and not as the cause.
+
+\section{Attribution: Relevance and Consistency}
+\label{sec:attribution}
+
+This section reports the measurements bearing on RQ4, which asks whether the attributions produced by coefficient drift identify the variable whose modelled relationship broke rather than the one that deviated most. The mechanism is a ranking by breakage. The discovered graph selects which parents each variable is regressed on, and the drift of those regressions' coefficients during the anomaly window produces the ranking; no path through the graph is traced.
+
+Those rankings can be read one anomaly at a time, and Appendix~\ref{app:full-results} sets them out that way: the top-ranked variable for each robotics attack class in every configuration, the same for the healthcare and industrial classes, the corresponding SHAP panels over the neural baselines, and the evidence behind the per-domain choice of ranking rule. Read that way the causal side looks strong on the robot. It isolates the downstream tablet sensors for the \texttt{LedsControl} attack in 9 of 9 configurations and recovers the thermal root cause of the mechanical \texttt{JointControl} attack in 8 of 9, and it does so across graphs of entirely different structure, two of which do not model the attacked LED channels at all. Three attack classes on one dataset are a thin basis for that claim. The rest of this section scores both families on two numbers computed across all three domains, which puts them on the same footing. The two do not run over the same classes, and the reason is the ground truth rather than the method: relevance needs a documented cause to score against and is therefore confined to the twenty-two classes that carry one, while consistency asks only whether methods agree with each other and so runs over all forty-three.
+
+Relevance asks whether the variables a method ranks highest are the ones the
+anomaly actually involved. The ground truth is taken from outside the pipeline
+in each domain. For the robot, an attack on a subsystem should attribute to
+that subsystem, so wheel attacks count any variable named for a wheel, LED
+attacks count the LED and tablet channels, and joint attacks count the joint
+angles and temperatures. For the ECG, each class is scored against the leads
+its diagnosis is standardly localised to, so an inferior myocardial infarction
+counts leads II, III and aVF. For the plant, the five faults with a documented
+actuator cause are scored against that actuator. The twenty-one classes with no documented cause, which are the six non-localising ECG
+classes and the fifteen plant faults whose cause the dataset does not state,
+are excluded from the scoring instead of being guessed at.
+
+Relevance cannot be read without knowing what an uninformed method would score,
+because the fraction of variables that count as relevant differs enormously
+between domains. Of the 244 robot sensors, 71 contain LED or tablet in the
+name, so a method selecting at random already scores 29\% on the LED attack.
+On the plant, where one actuator out of 52 is the documented cause, chance is
+2\%. Table~\ref{tab:relevance} therefore reports the chance rate beside
+every measurement, and the lift is the ratio between them. Chance is a property of the variable pool and not of how many variables a method is allowed to name, so one column serves both depths. It does vary by class, and the column reports the mean over a domain's classes, which is why it will not reproduce a single-class rate quoted in prose: on the robot chance is 29.1\% for the LED attack, 18.0\% for the joint attack and 3.7\% for the wheels, and PCMCI's 16.9\% is their mean.
+
+\input{tables/tbl_relevance}
+
+The domains separate clearly, and the separation is by lift rather than by raw share. On the plant the causal algorithms select the documented actuator at 8 to 13 times the rate of random selection, which is the strongest result in the table. On the robot the lift is 2.2 to 4.2. On the ECG every causal configuration sits at or below chance on the top three, and no higher than 1.02 times it on the top five, with PCMCI at 0.54 times chance, meaning its highest-ranked leads are less likely to be the diagnostic ones than leads drawn at random. That is a negative result and it is consistent with the detection numbers in Section~\ref{sec:baselines}: the healthcare pipeline scores well on detection while failing to explain what it detected.
+
+What the table will not support is a ranking of the methods against each other, and the class counts are why. The robot laboratory defines three attacks, the industrial specification names an actuator for five of its twenty faults, and fourteen of the twenty cardiac classes localise to lead territory at all. Every figure in the relevance column is a mean over that many classes, and the intervals beside them are correspondingly wide: CAM-UV's 74.1\% on the robot carries an interval running from 66.7 to 88.9, which contains PCMCI's 70.4 and swallows the whole of SHAP's 77.8 to 88.9. Reading the column order as a result would be the error Section~\ref{sec:rel-evaluation} names as this field's fourth, committed in the section that is supposed to answer it.
+
+Pooling the fourteen localisable ECG classes into one figure conceals the only
+structure the domain has, and separating them changes the reading.
+Table~\ref{tab:relevance-healthcare} groups the classes into the four diagnostic
+families they fall into. Infarctions are the one family the attributions
+localise above chance in every algorithm, reaching 1.81 times chance for CAM-UV,
+which is the strongest healthcare result anywhere in this work. Conduction
+disturbances sit below chance throughout. The rhythm classes split the
+algorithms sharply, from 0.13 times chance for PCMCI to 1.10 for GES.
+
+That ordering is what one would expect if the method is doing something real.
+An infarction is diagnosed by which territory the changes appear in, so the
+lead set it is scored against is the definition of the diagnosis, not a
+proxy for it. Atrial flutter is not a territorial diagnosis at all, and the
+leads it is scored against are the ones in which the flutter waves are
+conventionally easiest to see, which is a weaker notion of ground truth. The
+causal attributions localise the classes that are defined by location, and fail
+on the classes that are not. The pooled figure of 0.54 to 0.98 times chance
+reported above averages those two cases together and describes neither.
+
+\input{tables/tbl_relevance_healthcare}
+
+
+The SHAP row is the comparison against the neural baselines, computed over the
+same anomaly classes on all three datasets. Before it is read, one property of
+the lift column has to be stated, because it decides two of the three verdicts.
+
+Lift divides the achieved rate by the chance rate, and the chance rate is one
+over the size of the pool a method ranks. The methods do not rank the same
+pools. PCMCI and the neural baselines rank every variable, 244 on the robot and
+52 on the plant, while CAM-UV and GES rank only the variables their variance cap
+admits: CAM-UV 35 on the robot and 39 on the plant, GES 32 and 25. Where a fault has exactly one correct
+answer, as every documented plant fault does, lift is therefore proportional to
+pool size at a fixed hit rate, and a method searching 52 variables is credited
+with more skill than one searching 39 for finding the same actuator. Comparing
+lift across unequal pools rewards the larger search space. The raw counts do not
+have that defect, and on the plant they say something different from the lift
+column: CAM-UV names the documented actuator in 13 of its 15 scored
+configurations, against 12 for SHAP, 11 for PCMCI and 9 for GES. Widening to
+five variables reverses it, 14 for SHAP against 13 for CAM-UV, and by ten they
+are level at 15. The plant is a tie whose ordering depends on the cut-off, and
+reporting it as a SHAP win would be an artefact of the normalisation.
+
+The one comparison that is free of this is PCMCI against the neural baselines,
+which rank identical pools in all three domains. There SHAP is ahead
+everywhere: 85.2\% against 70.4 on the robot, 27.8 against 15.9 on the
+electrocardiogram, and 12 documented actuators against 11 on the plant. That is the defensible form of the result. It is still not the result this work set out to find. One further pair is like-for-like and deserves separating out, because it is the only one: on the electrocardiogram CAM-UV ranks the same twelve leads SHAP does.
+There the two are exactly level, 27.8\% each and 0.95 times chance each, and
+neither localises anything. GES posts the highest raw percentage on that domain,
+34.1 against 27.8, but it ranks nine leads where the others rank twelve, so its
+chance rate is 34.9\% against 29.2\% and its lift is 0.98 against 0.95. The gap
+is the pool and not the method, and on the quantity that divides the pool out the
+two are again at chance together.
+
+Four comparisons in this table set two methods ranking a pool of the same size
+against each other: PCMCI against the baselines in each of the three domains, and
+CAM-UV against them on the electrocardiogram. Post-hoc attribution is ahead in
+three of the four and level in the fourth, and intrinsic attribution is ahead in
+none of them. Every remaining cell of the column compares methods searching
+different numbers of variables and settles nothing in either direction.
+That is a weaker claim than the lift column alone would support, but it is the claim the counts
+sustain. Appendix~\ref{app:full-results} carries the SHAP panels
+these figures are computed from, for all three architectures on each of the
+three domains.
+
+Two properties of the robot ground truth should be read alongside those numbers,
+because both flatter the causal side. The rule counts a variable as relevant when
+its name contains the subsystem, so every temperature channel counts for the
+joint attack, which makes 19 of the 35 variables CAM-UV ranks relevant for that
+one fault. And on the LED attack neither CAM-UV nor GES holds a single LED
+channel, their caps having excluded all 69; their scores there rest entirely on
+the two tablet sensors. PCMCI, which holds every LED channel, ranks none of them
+in its top three either, so the failure to recover the attacked sensors is real and not an artefact of the caps. Tightening the rule would widen the margin
+against the causal side on this domain instead of narrowing it.
+
+Consistency asks a different question: whether independent methods agree on
+which variables explain a class. A method can be consistently wrong, so the two
+numbers are not substitutes. Agreement is measured as the mean pairwise Jaccard
+index over the selected sets. Chance agreement is again reported beside it,
+because the Jaccard index rises on its own as the selected set grows relative to
+the number of variables. Two random selections of ten from the twelve ECG leads
+overlap almost completely, and without that baseline the ECG would appear to be
+the most consistent domain purely by arithmetic. The nine causal configurations
+and the three neural architectures are scored as separate groups, so that each
+row measures how far one family agrees with itself.
+
+\input{tables/tbl_consistency}
+
+Table~\ref{tab:consistency} reports the result. Measured this way the causal attributions agree at 25.8 times chance on the
+robot and 6.7 times chance on the plant. On the ECG the agreement is 2.0 times
+chance over three variables and falls to 0.9 at ten, which is below what random
+selection would produce. The same weakness that the relevance scoring exposes
+on this domain appears again here.
+
+The comparison against the neural baselines needs one correction before it can
+be read. The causal family is nine configurations spanning three genuinely
+different algorithms, and the neural family is three architectures sharing one
+training pipeline; agreement falls as the group becomes more varied, so the
+causal side is being asked the harder question. Scoring each method against its
+own three variants, three pairs on each side, removes that asymmetry. On the
+robot the causal algorithms reach 0.422, 0.433 and 0.433 against 0.522 for SHAP.
+On the plant they reach 0.312, 0.358 and 0.373 against 0.697. On the ECG the
+ordering reverses, with CAM-UV at 0.447 against 0.360 for SHAP. GES reaches
+0.442 there but ranks only nine of the twelve leads, so its figure is not
+comparable to one computed over all twelve and is left out of the comparison.
+
+Agreement alone is not worth much, because a method that returns nearly the same
+answer whatever it is asked will score highly on it. The quantity that carries
+information is the margin between how far a family agrees with itself on one
+fault and how far a single configuration agrees with itself across different
+faults. On the ECG, CAM-UV agrees at 0.447 within a class against 0.180 between
+classes, a margin of 0.267, so its agreement is specific to the class it is
+explaining. That margin is a point estimate and is not tested anywhere in this thesis: it is computed per domain rather than per class, so there is nothing to pair over, and the sign test of Section~\ref{sec:attr-intervals} is applied to the raw index and not to this quantity. It is reported as an observation and should not be read as a demonstrated difference.
+
+The three neural architectures agree at 0.360 within a class against
+0.313 between classes, a margin of 0.047, and at five variables that margin goes
+negative: they agree with each other on a given record less closely than one of
+them agrees with itself across different records. Their consistency on this
+domain is close to a fixed ranking of the leads.
+
+So the causal side wins consistency on one dataset of three, it wins it by a
+wider margin than the raw index shows, and it is the dataset where its
+relevance is weakest. That combination is the most informative result in this
+section. On the ECG the causal configurations agree with one another, specifically
+and about the class in front of them, while agreeing on leads no more likely than
+chance to be the diagnostic ones. Agreement is not correctness, and this is the
+clearest case in this work of the two coming apart.
+
+Within the robot the picture also depends on which fault is being explained. On
+the LED attack the causal configurations agree at a Jaccard index of 0.722
+against 0.233 for the three neural architectures, so the structural consistency
+described at the head of this section holds there and is a factor of three.
+On the joint and wheel attacks the ordering reverses, at 0.289 against 0.667 and
+0.128 against 0.667. The causal advantage is real on the fault whose attributed
+variable is a downstream victim of the attack, and absent on the two faults
+where it is not.
+
+\input{tables/tbl_deviation}
+
+One question remains open through all of this. Both families could simply be following magnitude, returning whichever sensor moved furthest and calling it an explanation. Table~\ref{tab:deviation} is the control for that, because it ranks every variable by how far it moved during each robotics attack with no model involved at all: a method that merely tracked magnitude would return its top row. Reading the two pipelines against it shows that the distinction between them does not reduce to symptom against magnitude. On the \texttt{JointControl} attack, SHAP behaves exactly like a magnitude tracker: all three neural architectures isolate \texttt{RShoulderPitch}, which coincides with the single largest raw deviation in the system, ranking first of 249. The thermal root cause, ranked fourth, is missed by all three.
+
+That behaviour is not universal. During the \texttt{LedsControl} attack the SHAP attributions for the TCN and Transformer architectures escape raw magnitude, isolating \texttt{TabletTouchX} despite that sensor ranking 78th in raw deviation, with a standardised deviation of 1.3112 against the LED channels themselves at 4.1994. Post-hoc attribution over a reconstruction objective is therefore not reducible to magnitude tracking, and can capture a dependency that is not obvious from the signal.
+
+What the causal pipeline adds on these two faults is structural consistency. It recovers the 78th-ranked variable in 9 of 9 configurations for the LED attack and the 4th-ranked variable in 8 of 9 for the joint attack, across three distinct algorithms including two that do not model the attacked LED sensors at all. The relevance scoring above shows what that consistency is and is not worth: scored against the documented cause on every anomaly class that carries one, in all three domains, and compared over pools of the same size, the causal attribution is no more relevant than the post-hoc one anywhere. Section~\ref{sec:attr-intervals} adds how much of that a test supports, which is one comparison of the nine made at the depth this thesis reports attribution at, and Table~\ref{tab:attr-paired-full} extends the count to every depth.
+
+This remains a comparison of pipelines, not of attribution methods on equal terms. SHAP is explaining the neural baselines and the drift ranking is explaining the causal models, so the two are not applied to a common substrate and no claim is made that SHAP is deficient. The claim is narrower, and narrower still than the preceding paragraphs might suggest. On the joint fault the neural pipeline reports the symptom that moved furthest and the causal pipeline reports the relationship that broke. On the LED fault both recover a variable ranked 78th by deviation, so the distinction is a tendency of these two pipelines on some faults and not a property separating the two kinds of attribution.
+
+\subsection{Which Attribution Differences Survive a Test}
+\label{sec:attr-intervals}
+
+Table~\ref{tab:attr-paired} puts the comparison on a footing the point estimates cannot provide. Each row is a difference taken within an anomaly class and then averaged, which is the right form here because every method is scored on the same classes: some faults are easier to attribute than others for all of them at once, and pairing removes that shared variation instead of charging it to the methods. The interval resamples whole classes rather than table cells, so that three regression variants of one algorithm on one fault count as one observation of one event and not as three.
+
+\input{tables/tbl_attr_paired}
+
+Six of the nine rows carry no verdict, and the reason is the design rather than the data. The test is an exact paired sign test, and its smallest attainable two-sided value on $n$ untied classes is $2^{1-n}$: 0.25 at best with the robot's three attack classes and 0.0625 at best with the plant's five documented actuators. Ties are discarded and so raise those floors rather than lowering them, which on the plant leaves four of the six rows with one or two untied classes and a real floor of 0.5 or 1. Neither panel reaches the 5\% level however large the difference happens to be, so neither is asked for one. The bootstrap interval is reported beside the difference as a range and is not the rule; on the robot it is not even an interval in any useful sense, since with $3^3 = 27$ equally likely resamples the all-minimum draw carries more mass than the lower tail removes and the bounds collapse onto the smallest and largest of the three values. Reading a verdict off those rows would be the error Section~\ref{sec:rel-evaluation} names as this field's fourth, committed in the section written to answer it, so they are dashed.
+
+What the underpowered panels can report is the sign, and the table gives it as three counts: classes favouring SHAP, classes favouring the causal side, and classes tied. On the robot all three attack classes favour SHAP against GES and against PCMCI, which is the strongest statement three classes admit; one-sided, that is $p = 0.125$. Against CAM-UV the split is two and one tied. Suggestive is not significant, and the difference between those two words is the whole of what this subsection adds.
+
+Only the fourteen localisable cardiac classes support a test. At the pre-specified depth SHAP beats PCMCI by 11.9 points, ten classes favouring it against one, and the sign test returns $p = 0.0117$, which survives Holm correction across the domain's three comparisons at $0.0352$. Against CAM-UV the difference is 0.0, seven classes each way and one tied, and nothing is claimed.
+
+The remaining row needs the pool caveat of Section~\ref{sec:attribution} applied to it, because a paired difference does not remove that confound and can disguise it. Against GES the raw difference runs the other way at both depths, $-6.3$ and $-7.1$, and neither interval excludes zero. It should not be read as GES explaining better even if it had: GES ranks nine of the twelve leads where SHAP ranks all twelve, so its chance rate is 34.9\% against 29.2\% and the two quantities being differenced are not measured against the same denominator. On lift, which divides that denominator out, the two sit at 0.98 and 0.95, both at chance, and neither localises anything.
+
+That restriction leaves one comparison carrying the whole verdict, and it is the one that should. PCMCI and the neural baselines rank identical pools in every domain, 244 variables on the robot, twelve leads on the electrocardiogram and 52 on the plant, so theirs is the only difference here that is a difference between methods rather than between search spaces. It is also the only one with fourteen classes behind it. Where the design can answer the question and the comparison is like-for-like, post-hoc attribution is ahead.
+
+Two readings of that result are available and the thesis cannot decide between them. The first is the three-parent cap. Section~\ref{sec:parent-cap} measures how much of each algorithm's parent choice the discovery step actually makes, and on this domain PCMCI is where it makes least: it offers 12.42 candidate parents per lead and the cap cuts that to 3.00 by lag order, discarding 75.8\% of what the search found, against 26.5\% for GES. An attribution can only be as good as the parent sets it is computed over, and where those are settled by an arbitrary tiebreak the attribution inherits the arbitrariness. That reading is confined to healthcare and must not be generalised, because Table~\ref{tab:parentcap} contradicts it elsewhere: on robotics the cap discards 98.2\% of PCMCI's edges and none of GES's, yet PCMCI attributes better there, 70.4\% against 48.1\%. The second reading is simpler and this study cannot rule it out. As Section~\ref{sec:setup-shap} records, the neural baselines read PCMCI's variable set at PCMCI's subsampling rate, so PCMCI is the only algorithm scored on exactly the observations SHAP saw. It may separate because it is the only comparison in which a difference can be attributed to the method at all.
+
+The consistency figures behave the same way under the same test. Comparing each family with itself, the neural side is more self-consistent than the causal side on the plant at every depth, by 0.425, 0.402 and 0.314, with twenty classes behind each and sign tests at $p \leq 0.0004$. On the electrocardiogram nothing separates: the margins are 0.046, 0.025 and 0.076 and the closest of the three returns $p = 0.1153$. The robot's three classes carry no verdict here either, for the reason given above. A method can be consistent without being correct, so this is not a second verdict on attribution quality; it says that the three neural architectures, sharing one training pipeline, converge on the same variables more reliably than three genuinely different discovery algorithms do, which is closer to a statement about the diversity of each family than about the merit of either.
+
+The honest summary of Section~\ref{sec:attribution} is therefore narrower than its tables first suggest, and narrower than an earlier draft of this section claimed. On the only domain with enough ground truth to test, structural attribution from a causal graph is measurably worse than post-hoc SHAP where the graph comes from PCMCI, and indistinguishable from it where the graph comes from GES or CAM-UV. One exploratory row in Table~\ref{tab:attr-paired-full} runs the other way, and it is reported
+here rather than left in a file: at ten variables GES leads SHAP by 9.0 points with thirteen of fourteen classes behind it. It is discounted because at that depth GES is not ranking. As stated earlier in this section it holds nine of the twelve leads, so a request for ten returns all nine and its relevance is forced to equal its chance rate exactly, giving it a lift of 1.00 by construction. The comparison measures the size of the pool rather than the quality of the explanation, and no
+other depth behaves this way. On the other two domains no verdict is available in either direction, and the failure to separate there is a property of having three and five scorable classes rather than a finding about the methods. Three attack classes, five documented actuators and fourteen localisable diagnoses are the whole of what three public benchmarks provide. Saying what that quantity of ground truth cannot decide is more useful than reporting an ordering it cannot support.
+
+\section{Graph Density and Detection Performance: a Domain-Specific Relationship}
+\label{sec:density}
+
+How much structure each discovered graph actually imposes is reported in Table~\ref{tab:density}, measured as the share of variable pairs linked by at least one surviving edge, alongside the best detection score obtained from that graph. The relationship it shows holds in one domain and reverses in another, which is why the heading names it domain-specific.
+
+The only domain in which causal discovery decisively outperforms both baselines is Healthcare, and this measurement offers a mechanism. The relationship is monotone: GES produces the sparsest graph at 51.5\% density and achieves the highest AUC-ROC at 0.8114; CAM-UV sits between at 72.7\% and 0.7861; PCMCI produces the densest graph at 95.5\% and the lowest score at 0.7147.
+
+The PCMCI figure deserves stating directly: it links 63 of 66 possible variable pairs, so nearly every lead is a candidate parent of nearly every other. What follows from that is not, however, that the detector approaches regressing each lead on all the rest, because the three-parent cap of Section~\ref{sec:parent-cap} forbids it. Every design matrix here is three columns wide whichever algorithm supplied the graph. The consequence is subtler and is set out in Table~\ref{tab:parentcap}: what a dense graph changes is not how large the regression is but how much of the parent choice the discovery step actually makes. PCMCI offers each lead 12.42 candidate parents on average and the cap reduces that to exactly 3.00, discarding 75.8\% of the edges it found; GES offers 3.78 and retains 2.78, discarding 26.5\%. Where twelve candidates are cut to three by lag order, with ties resolved by variable index, the surviving parent set is settled substantially by an arbitrary tiebreak rather than by the evidence the search weighed. The proposed advantage of causal discovery on biological data is precisely that a structural constraint prevents fitting to superficial variance. A graph this dense does not supply that constraint; the cap does, and it selects on lag and not on strength.
+
+Two objections must be addressed before this reading is accepted. The first is that a pair is counted as linked whenever any lag carries an edge, and PCMCI is given more lags in which to link one. The cached tensors allocate four lag slots to PCMCI on this domain and two to each of the others, but allocation is not occupancy: GES and CAM-UV are run on the unlagged matrix and the pipeline assigns their edges a single lag, as Section~\ref{sec:method-axis1} sets out, so exactly one of their two slots is ever populated where PCMCI populates all four. The matched control is therefore to restrict PCMCI to one lag and not two, and it is the stricter test. Restricted to $\tau = 0$ alone it still links 60 of the 66 variable pairs, a density of 90.9\% against the 51.5\% GES reaches over its own single lag. The ordering is unchanged and most of the gap survives, so the objection does not account for the relationship. The second cannot be dismissed as cleanly: PCMCI samples the same recording at rate 7 against 10, so it performs discovery on roughly 1.43 times as many observations, and more observations confer more power to reject independence and retain more edges. Density and discovery sample size are therefore entangled on this domain, and this study cannot separate whether the denser graph degrades detection or whether both follow from the subsampling choice.
+
+The mechanism must also not be overclaimed as general. On the Industrial domain the ordering reverses outright, the densest graph at 38.5\% scoring 0.9151 against the sparsest at 3.2\% scoring 0.8994. On Robotics the comparison is confounded beyond interpretation, since PCMCI operates on 244 variables where GES and CAM-UV are capped at 35.
+
+The sparse structural constraint is therefore supported on Healthcare and only there, which is consistent with Healthcare being the sole domain in which the causal pipeline exceeds the tuned neural baselines.
+
+\input{tables/tbl_density}
+
+Figure~\ref{fig:density-auc} plots density against detection for all nine pairs at once, which is the only way to see that the three domains disagree without being told so. Healthcare descends monotonically, industrial rises, and robotics is neither. Figure~\ref{fig:parentcap-bars} does the same for the cap, plotting the final column of Table~\ref{tab:parentcap}. It is included because the unevenness is the point and a column of percentages does not carry it: the cap discards almost everything PCMCI found on robotics and nothing at all of what GES found there, so that comparison sets a whole graph against a small selection from another.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]{fig_density_vs_auc.png}
+  \caption[Graph density against detection performance]{Graph density against the best detection score obtained from that graph, for all nine algorithm--domain pairs. The healthcare series falls monotonically, which is the relationship Section~\ref{sec:density} argues from; the industrial series rises, which is why the mechanism is not offered as general; and robotics, where PCMCI works over 244 variables and the other two over 35, is confounded beyond interpretation.}
+  \label{fig:density-auc}
+\end{figure}
+
+\input{tables/tbl_parent_cap}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.86\textwidth]{fig_parent_cap.png}
+  \caption[Share of each discovered graph discarded by the three-parent cap]{Share of each discovered graph discarded by the three-parent cap. The bars are the final column of Table~\ref{tab:parentcap}. What matters is that they are not equal: on robotics the cap removes 98.2\% of what PCMCI found and nothing at all of what GES found, so that comparison sets a whole graph against a small selection from another.}
+  \label{fig:parentcap-bars}
+\end{figure}
+
+A component of that density moves with detection in the same way across these three domains, and it exists for one algorithm only. CAM-UV alone returns the set of variable pairs it assigns to an unobserved common cause, and the share of pairs in that set falls from domain to domain exactly as its detection score rises. Being specific to one algorithm it is reported in Appendix~\ref{app:confounders} rather than here, together with the synthetic ablation that fixes the sample size below which the method recovers nothing.
+
+\section{The Eight-Lead Ablation}
+\label{sec:eight-lead-ablation}
+
+The eight-lead ablation quantifies how much of the causal pipeline's performance on the Healthcare dataset relied on algebraic redundancy. Removing the four leads governed by exact linear dependencies produces a sign flip across algorithm families. GES relies partially on this redundancy, its performance degrading across all three variants, with GES linear/ridge dropping from 0.8114 to 0.7418.
+
+In the other direction, the redundant leads were actively harming specific PCMCI configurations. The PCMCI polynomial variant gains 0.1280, rising from 0.5075 to 0.6355, when the four dependent leads are removed. This is mechanically sound: evaluating a degree-three polynomial expansion over exact linear combinations introduces severe multicollinearity and degrades the conditioning of the regressions. Removing the redundant variables stabilises the model.
+
+This ablation cannot be read directly as a within-algorithm test of the density mechanism, because comparing a twelve-variable density against an eight-variable one changes the denominator from 66 pairs to 28 and inflates the fraction even where absolute edge counts fall. Restricting the twelve-lead graph to the same eight leads removes that confound and permits the comparison over a common 28 pairs.
+
+Under that restriction the algorithms separate, as Table~\ref{tab:lead_ablation} sets out. GES rises from 53.6 to 75.0\% density and loses 0.054 in mean AUC-ROC; CAM-UV rises from 78.6 to 100.0\% and loses 0.013. Both are consistent with the mechanism proposed in Section~\ref{sec:density}. PCMCI, by contrast, links 26 of 28 pairs under both conditions, an identical 92.9\%, while its mean AUC-ROC rises by 0.046. Its improvement therefore cannot be attributed to a change in graph density, and the multicollinearity account above is the remaining explanation.
+
+\input{tables/tbl_lead_ablation}
+
+Two mechanisms are thus separable rather than confounded. Three algorithms remain too few to establish either, and the cross-algorithm caveats of Section~\ref{sec:density} continue to apply.
+
+\section{Discovery Quality under Autocorrelation}
+\label{sec:pcpcmci}
+
+Section~\ref{sec:rw-cd} selects PCMCI as the constraint-based representative on the grounds that the standard method degrades under exactly the conditions these three domains present. Table~\ref{tab:pcpcmci} is that measurement. The series is synthetic and built to contain no cross-variable edges at all, so every link either algorithm reports is a false positive by construction and the false-positive rate is read directly off the output.
+
+PC degrades as predicted. Its false-positive rate rises from 0.0429 at zero autocorrelation to 0.4982 at $\phi = 0.95$, a twelve-fold increase, so at the top of the sweep it links very nearly half of all variable pairs in a system that contains no links. PCMCI does not degrade: its rate is flat across the whole sweep, moving from 0.2946 to 0.2839 as $\phi$ rises. Flatness in $\phi$, rather than any particular level, is the property the algorithm selection rests on, and it is what PC lacks.
+
+The level does require a qualification that the last two columns make visible. Applying the false-discovery correction holds PCMCI between 0.0500 and 0.0589 across the sweep; without it the rate sits near 0.28. This pipeline leaves that correction off, so the uncorrected column is the one describing the configuration evaluated throughout this thesis. The graphs reported in Section~\ref{sec:density} are therefore produced by a variant whose false-positive rate on a null system is roughly 0.28 instead of 0.05, which is consistent with the dense healthcare graph reported there and is a further reason to read that density as over-linking and not as recovered structure.
+
+\input{tables/tbl_pc_pcmci}
+
+\section{Computational Cost}
+\label{sec:runtime}
+
+Cost is reported here because a structural front-end is only useful if it can be afforded, and because the measurement existed and had gone unreported. Table~\ref{tab:runtime} gives wall-clock detection time for all 27 configurations. Discovery is cached and excluded, so these figures describe the recurring cost rather than the one-off cost of learning a graph.
+
+The table does not rank the three algorithms, and the variable and subsample columns are printed so that a reader can see why not. PCMCI works over 244 variables on robotics where the other two work over 35, and over every industrial sample where they take one in ten. No domain presents the three with the same workload, so the figures bound what each configuration cost as it was run and support no comparison across algorithms. This is the same confound recorded for graph density in Section~\ref{sec:density}, and it has the same origin.
+
+A second limit belongs in the same breath, because it is the more consequential of the two. Discovery is the step at which these algorithms differ by orders of magnitude, and it is not measured here at all. It is paid once per algorithm and dataset and then cached, so it does not recur per regression variant; re-running it to time it would rebuild CAM-UV's graph, which is not reproducible between runs, and would therefore change every result in this dissertation. The measurement was not worth that price. What Table~\ref{tab:runtime} reports is consequently the recurring operational cost of a deployed detector and not the total cost of adopting a method.
+
+One comparison is available, because it holds workload fixed. Within each of the nine algorithm--domain cells the three regression variants see an identical variable set at an identical subsampling rate, and in all nine the RBF variant is the slowest, by between 1.6 seconds on GES industrial and 23.6 on PCMCI industrial. The difference between linear and polynomial never exceeds 4.4 seconds by comparison, and changes sign in two of the nine cells with a third tied, so it is not a consistent effect at all. What detection time is sensitive to is the random Fourier feature map, rather than the polynomial expansion.
+
+The absolute magnitudes bound the practical claim. The slowest configuration in the grid is PCMCI industrial with the RBF map at 151.5 seconds, and the whole grid runs in under three minutes per configuration, on a 15~W mobile processor, which is the weaker end of the hardware a practitioner would deploy on instead of the stronger. At these problem scales cost does not separate the methods, and the choice between them should be made on the accuracy and attribution grounds argued above. Whether that survives at larger variable counts is not established here, and the limit that was encountered is an algorithm's rather than the grid's. The 244-variable PCMCI runs are the largest measured, while Section~\ref{sec:disc-threats} records that a 160-variable GES run did not converge in 66 minutes of CPU. That asymmetry is why GES and CAM-UV take robotics at 35 variables, and therefore why this table contains no cell in which all three algorithms meet on the same workload.
+
+\input{tables/tbl_runtime}

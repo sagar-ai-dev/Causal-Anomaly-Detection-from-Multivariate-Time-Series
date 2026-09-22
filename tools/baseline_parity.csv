@@ -1,0 +1,4 @@
+Domain,Baseline subsample,Baseline variables,Baseline fault-free samples,Best causal algorithm,Best causal variant,Best causal AUC,Causal subsample,Causal variables,Causal fault-free samples,Resolution matched
+Robotics,74,244,274,PCMCI,RBF + Ridge,0.8752,74,244,274,yes
+Healthcare,7,12,7143,GES,Linear / Ridge,0.8114,10,12,5000,no
+Industrial,1,52,500,PCMCI,Polynomial degree 3,0.9151,1,52,500,yes

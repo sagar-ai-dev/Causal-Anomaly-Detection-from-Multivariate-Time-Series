@@ -1,0 +1,192 @@
+\chapter{Experimental Setup and Dataset}
+\label{ch:experimental_setup}
+
+\section{Introduction}
+Comparing a causal detector against a deep learning one is only worth doing if the comparison is controlled, and the usual failure is not a wrong result but an uninterpretable one. Where two methods differ in their preprocessing, their subsampling, their scaling or the way their threshold is set, the difference in their scores cannot be assigned to any of those things in particular, and the reported gap measures the experimental setup as much as it measures the algorithms.
+
+The framework here is built around one constraint: everything downstream of the discovery step is held identical. All 27 causal configurations and all three deep learning baselines run through the same label-blind evaluation pipeline.
+
+Three third-party implementations supply the discovery step. PCMCI is run through tigramite~\cite{runge2023tigramite}, GES through causal-learn~\cite{zheng2024causallearn}, and CAM-UV through lingam~\cite{ikeuchi2023lingam}. The regression variants, the ridge estimator, the polynomial expansion and the random Fourier feature map are standard implementations; the recursive least squares filter, the drift score, the thresholding rule and the attribution ranking are written for this pipeline. Discovery runs at a significance level of $\alpha = 0.05$ throughout, and PCMCI derives its maximum lag per domain from the frequency content of the signal, $\tau_{\max} = \lfloor f_{\max} / \bar{f} \rfloor$. The complete parameter set, including the per-domain forgetting factor $\lambda$, the tolerance multiplier $\kappa$, the ridge penalty and the subsampling rates, is tabulated in Appendix~\ref{app:hyperparameters}.
+
+\label{sec:setup-lag}
+One consequence of that derivation is worth recording here, because a later argument depends on it. PCMCI is free to place a parent at any lag from zero upward, and the minimum is left at the library default of zero, so a contemporaneous relationship is tested on the same footing as a lagged one. It overwhelmingly wins. Measured against the cached graphs under the pipeline's own sparsification rule and its lag-ordered three-parent cap, 100.0\% of the parent slots PCMCI's regressions retain on Healthcare and on Robotics sit at lag zero, and 98.7\% do on Industrial. On this pipeline PCMCI is therefore not the algorithm regressing each variable on its own past; it is the one most reliant on the present.
+
+\section{Dataset Provenance and Characteristics}
+To validate the generalisability and domain-specificity of the causal anomaly detection pipeline, experiments were conducted across three distinct environments: cyber-physical, biological, and industrial. Table~\ref{tab:datasets} places the three side by side before any of them is described in detail. They are not comparable in shape. The robot recording is wide and short, the electrocardiogram corpus is narrow and long, and the plant simulation sits between the two on both counts while carrying an evaluation split that is almost entirely faulty. Those differences govern a good deal of what Chapter~\ref{ch:results} reports, which is why they are gathered here at the outset.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption[The three evaluation datasets compared]{The three evaluation datasets compared. The robotics variable counts are the recorded columns and the number still varying once constant channels are dropped and the series is subsampled; the healthcare counts are the recorded leads and the subset that is algebraically independent of the rest. Fault-free samples are the observations the best causal configuration in each domain performs discovery on, at that configuration's own subsampling rate, and are taken from Table~\ref{tab:baseline_parity}. Anomaly prevalence is the positive rate of each evaluation split as scored by the parameter-free control of Section~\ref{sec:trivial-control}.}
+  \label{tab:datasets}
+  \begin{tabularx}{\textwidth}{@{}l
+      >{\raggedright\arraybackslash}X
+      >{\raggedright\arraybackslash}X
+      >{\raggedright\arraybackslash}X@{}}
+    \toprule
+     & Robotics (Pepper) & Healthcare (PTB-XL) & Industrial (TEP) \\
+    \midrule
+    Monitored variables
+      & 255 recorded, 244 after subsampling
+      & 12 leads, 8 of them independent
+      & 52 \\[0.35em]
+    Fault-free samples
+      & 274
+      & 5{,}000
+      & 500 \\[0.35em]
+    Anomaly classes
+      & 3
+      & 20
+      & 20 \\[0.35em]
+    Anomaly prevalence
+      & 0.5795
+      & 0.5717
+      & 0.9524 \\[0.35em]
+    Nature of the faults
+      & attacks injected into the control software of a live robot
+      & cardiac pathology recorded from patients and labelled by a clinician
+      & process disturbances introduced into a plant simulator \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The fault column is the row that matters most for how the results are read. Only one of the three domains carries faults that were neither injected nor simulated, and it is also the domain where the detector has least raw amplitude to work with.
+
+\subsection{The Cyber-Physical Domain: SoftBank PEPPER Robot}
+The primary benchmark for this research is derived from the SoftBank Pepper humanoid robot, representing a highly dynamic, deterministic cyber-physical system. The raw dataset comprises high-frequency telemetry across 255 distinct variables, including kinematic sensors, hardware diagnostics, and software states. Three counts follow from that recording and the thesis quotes each of them, so they are separated here. Six variables never change during fault-free operation, leaving 249 that carry information; this is the population the model-free deviation ranking in Chapter~\ref{ch:results} works over. Subsampling to the discovery resolution of every 74th sample renders five more constant, so the causal graphs are learned over 244. Each number is correct for what it counts, and none is the raw sensor total.
+
+One property of the export reaches the attribution figures, so it is recorded here. Eighteen sensor names occur twice, and in every one of the eighteen cases the two channels carry different readings, so they are distinct physical sensors that share a label, and not a duplicated column. They are disambiguated with a numeric suffix on load, which is why a bar in the robotics attribution plots is labelled \texttt{LaserF01X.1}.
+
+The evaluation focuses on three documented cyber-physical attack vectors:
+\begin{itemize}
+    \item \textbf{\texttt{LedsControl}:} A software-level manipulation directly targeting the visual feedback hardware.
+    \item \textbf{\texttt{JointControl}:} A physical manipulation resulting in a mechanical stress attack, driven by excess motor strain leading to elevated temperatures.
+    \item \textbf{\texttt{WheelsControl}:} An attack manipulating the locomotion and gyroscope subsystems.
+\end{itemize}
+
+\subsection{The Healthcare Domain: PTB-XL ECG}
+PTB-XL is a clinical electrocardiography corpus released through PhysioNet~\cite{wagner2020ptbxl,goldberger2000physionet}. Each record is a short resting electrocardiogram from one patient, annotated by a cardiologist, and this study uses the low-resolution release of each signal.
+
+What the twelve channels record is one quantity seen from twelve directions. Depolarisation and repolarisation of the cardiac muscle produce a travelling electrical wavefront, and at the body surface that wavefront behaves approximately as a single time-varying dipole. A lead is a potential difference between electrode positions, which makes it a projection of that dipole onto one axis. Six limb leads (I, II, III, aVR, aVL, aVF) are derived from electrodes on the two arms and the left leg and view the heart in the frontal plane. Six precordial leads (V1 to V6) come from electrodes placed in sequence across the chest wall and view it in the transverse plane, from the right ventricle round to the lateral wall of the left. Twelve channels, one source.
+
+The primary evaluation on the PTB-XL ECG dataset uses all 12 standard leads. Four of them (III, aVR, aVL, aVF) are exact linear functions of the others governed by Einthoven's and Goldberger's equations~\cite{malmivuo1995bioelectromagnetism,goldberger1942augmented}. Because causal discovery algorithms cannot distinguish algebraic definitions from biological mechanisms, a secondary robustness check was executed restricting the data strictly to the 8 algebraically independent leads. This ablation quantifies how much of the model's baseline performance was derived from exploiting these mathematical dependencies.
+
+The dataset's diagnostic annotations roll up into five superclasses: a normal electrocardiogram, myocardial infarction, ST/T change, conduction disturbance and hypertrophy. Every one of the four abnormal superclasses is present among the records used here as anomaly classes. They include infarctions in the inferior, anteroseptal and lateral territories, non-diagnostic and non-specific ST/T abnormalities, anterior and posterior fascicular block, incomplete right bundle branch block, non-specific intraventricular conduction disturbance, and left and right ventricular hypertrophy. Several records carry a rhythm statement instead of, or alongside, a diagnostic one, atrial flutter and atrial fibrillation being the common cases, and the diagnostic superclasses do not cover those at all.
+
+This is the domain where the case for a relational detector is easiest to state. Absolute amplitude in any single lead is a poor discriminator: it moves with electrode placement, chest wall thickness, body position and recording gain, and it varies between healthy people by more than several pathologies shift it. What identifies a condition is the pattern across leads. Infarction shows ST elevation in the leads that face the injured wall together with reciprocal depression in those facing away, so the sign of the relationship between two channels is the finding and the size of either one is not. Conduction disturbance changes the order and the relative timing of the deflections rather than their height. Hypertrophy is read from ratios, such as how the R wave grows from one precordial lead to the next. A detector that watches each channel's amplitude on its own has no access to any of this. One that tracks how each lead is predicted from the others does.
+
+\subsection{The Industrial Domain: Tennessee Eastman Process}
+The Tennessee Eastman Process (TEP) is a simulation of a real chemical plant, published by Downs and Vogel as an open control problem with the proprietary chemistry disguised behind lettered components~\cite{downs1993tep}. Four gaseous reactants are fed into a reactor, where exothermic and irreversible gas-phase reactions form two liquid products and a byproduct. An inert component enters with one of the feeds and accumulates, so the plant cannot be run closed.
+
+The plant has five unit operations and the fault behaviour of all of them is observable. Reactor effluent leaves as vapour and is cooled through a condenser into a vapour-liquid separator. The uncondensed overhead from the separator is returned to the reactor feed by a recycle compressor, and a purge stream bleeds off the inert and the byproduct before they build up. Liquid from the separator passes to a stripper, where the light reactants still dissolved in it are stripped out with one of the feed streams and returned to the process; the stripper bottoms are the product. Two loops therefore close around the reactor, which is what makes the process a useful test case: a disturbance anywhere in the recycle path comes back to its own origin.
+
+The 52 variables used here combine the plant's process measurements, which are flows, pressures, levels, temperatures and composition analyses taken around the reactor, the separator and the stripper, with the manipulated variables through which the control loops act on the valves. Both sides of the control loop are visible, and that is the reason a fault here need not show up as a large excursion in any measurement. A regulatory controller that is doing its job absorbs a disturbance by moving a valve, so the measured variable is held near setpoint and the evidence of the fault sits in the changed relationship between the two.
+
+The twenty fault classes are the disturbances the original specification defines, simulated and released as labelled runs by Rieth et al.~\cite{rieth2017tepdata}. Most are step changes that shift a quantity to a new level and hold it there: the composition of a feed stream changes, or the inlet temperature of a cooling water supply moves. Several are random variations in the same quantities, which leave the mean where it was and alter only the variability, and these are much harder to see in a single channel. One is a slow drift in the reaction kinetics, which moves the plant gradually rather than at an instant, so there is no onset edge to detect. Two are sticking valves, one on the reactor cooling water and one on the condenser cooling water, where the actuator no longer tracks the command it is given. The remaining five the specification records only as unknown: the simulator injects them and does not say what they are. Each faulty run also begins in normal operation and the disturbance is introduced part of the way in, which is why the faulty files are trimmed to the post-onset window before they are scored.
+
+Under the unified protocol, applying a 70/30 train-evaluation split reduced the discovery regime to merely 35 samples for 52 variables at a subsampling rate of $k=10$. This severely limits statistical power during the causal discovery phase. Table~\ref{tab:tep-power} quantifies the effect directly: holding the algorithm fixed and varying only the subsampling rate, the recovered graph density rises from 0.0238 at 35 samples to 0.1112 at 350. The sparsity of the industrial graphs is therefore a consequence of the sample count instead of a property of the process.
+
+\input{tables/tbl_tep_power}
+
+\section{Data Preprocessing and Leakage Prevention}
+For all domains, the contiguous multivariate time-series data was strictly partitioned chronologically into a 70\% fault-free training set and a 30\% evaluation set. Normalisation is Z-score standardisation. To prevent leakage, the mean and standard deviation were fitted only on the 70\% fault-free training split.
+
+To manage computational intractability, temporal subsampling was applied. The subsampling rate $k$ is a property of the algorithm's internal policy, not a global property of the domain. While GES and CAM-UV were evaluated at a fixed $k=10$ across all domains, PCMCI selects its subsampling adaptively ($k=74$ for Robotics, $k=7$ for Healthcare, $k=1$ for Industrial). Computational limits also required capping GES and CAM-UV at 35 variables using a label-blind variance filter. Strictly matched algorithmic comparisons are therefore limited to the Healthcare and Industrial domains. Because the algorithms score different sample sets, paired significance testing between PCMCI and the other causal algorithms is untestable.
+
+\subsection{Preprocessing the Discovered Graph: Sparsification}
+Everything above prepares the data. One further preparation step is applied to the graph, between discovery and scoring, and it is a preprocessing step in exactly the same sense: the detector never sees the raw output of a discovery algorithm, only the edge set that survives this rule.
+
+Graph density is controlled by a dual-constraint sparsification rule. An edge is retained only if it achieves statistical significance ($p < 0.05$) and its absolute effect size exceeds a domain-specific multiplier applied to the mean absolute effect size. This multiplier was fixed at 1.0 for the Healthcare and Robotics domains and at 0.0 for the Industrial domain, where the second condition is therefore satisfied unconditionally.
+
+The two quantities entering this rule are not the same object for all three algorithms, and the difference is worth stating and not leaving for a reader to discover. PCMCI supplies genuine partial correlations from its ParCorr test, so the stored effect sizes span $[-0.948, 0.954]$ and the filter discriminates among them: 149 of 564 candidate healthcare edges survive it. GES and CAM-UV instead supply edge indicators. A CPDAG and a CAM-UV parent set carry adjacency, not a continuous strength, so every discovered edge is recorded with a value of exactly 1.0 alongside a synthetic $p$-value. For those two algorithms the significance test reduces to \emph{the edge was discovered}, and the effect-size filter (comparing 1.0 against the mean of a sparse indicator matrix) is satisfied by every edge without exception.
+
+The practical consequence is measurable and small. Across all nine algorithm--domain configurations the effect-size filter removes edges in exactly one, PCMCI on healthcare, where it discards three of 66 variable pairs. Graph density is therefore determined by what each algorithm discovers, not by the filter applied afterwards.
+
+\section{Anomaly Scoring and Label-Blind Thresholding}
+The causal anomaly detection pipeline does not evaluate reconstruction error; it measures coefficient drift. Reconstruction error asks whether a specific sensor value is unusual, whereas coefficient drift asks whether the fundamental physical relationship between variables has broken.
+
+For a target variable with a design vector (which explicitly includes the intercept) built from its causal parents, the model tracks the evolution of regression coefficients using Recursive Least Squares (RLS). Following a 15-step warm-up period, each coefficient's departure from its fault-free value is compared against a tolerance derived from how far that same coefficient drifts under normal operation, and the score at each timestep is the largest such ratio across every coefficient of every modelled target:
+$$s(t) = \max_{v,\,k}\ \frac{\bigl| w_{v,k}(t) - w_{v,k}^{(0)} \bigr|}{\kappa \, \bigl\lVert d^{\text{base}}_{v,k} \bigr\rVert_2}$$
+The per-domain tolerance $\kappa$ takes the values 1.2 on Robotics, 2.0 on Healthcare and 3.0 on Industrial, and is identical across all three algorithms within each domain. Appendix~\ref{app:hyperparameters} tabulates it alongside every other setting the pipeline applies, separating the values the audit holds identical across all 27 configurations from the few that vary by algorithm or by domain, so that a reader can check the uniformity claim rather than take it. Because each coefficient is divided by its own fault-free drift, the score is expressed in multiples of normal variation rather than in raw coefficient units, which is what makes it comparable across variables of very different scale.
+The theoretical justification for prioritising coefficient drift over reconstruction error is empirically verified. During algorithmic validation, a genuine structural relationship break yielded a mean drift score of 4.1707, whereas an amplitude rescaling with an intact relationship yielded a score of merely 0.0002. A standard reconstruction metric cannot distinguish between these two scenarios, but the drift metric successfully separates them by four orders of magnitude. Table~\ref{tab:validation} reports this alongside the other numerical checks, each of which constructs a problem whose answer is known independently and confirms the implementation reaches it.
+
+\input{tables/tbl_validation}
+
+To binarise the continuous anomaly scores, a universal, label-blind threshold $\tau$ was instituted. For every evaluated model, $\tau$ is defined precisely as the 95th percentile of the score distribution generated from the held-out fault-free data, ensuring a 5\% False Positive Rate (FPR) budget.
+
+\subsection{The Per-Domain Ranking Rule}
+\label{sec:ranking-rule}
+
+The attribution ranking of Section~\ref{sec:method-attribution} admits two reductions, and which one applies is a property of the domain rather than of the method. Robotics ranks by the raw $L_2$ norm of the attack-window drift, retained for parity with the reference implementation that defines this domain's evaluation protocol. Healthcare and Industrial divide that norm by each variable's own fault-free baseline. The choice follows the variance profile of the instrumented system, and it is not neutral: Appendix~\ref{app:full-results} shows that on one robotics fault the two rules return different variables, and says which sensors the normalised rule promotes and why.
+
+\section{Baseline Architectures and Hyperparameter Protocol}
+Three deep learning autoencoders (LSTM, Temporal Convolutional Network, and Transformer) were implemented. Each architecture underwent a systematic 12-configuration hyperparameter search ($h \in \{32, 64\}$, $l \in \{1, 2, 3\}$, $\alpha \in \{0.001, 0.01\}$) across all three domains. The optimal configuration was selected based strictly on minimising the Mean Squared Error (MSE) on a disjoint 15\% fault-free validation split, with early stopping to prevent overfitting.
+
+\subsection{Post-hoc Attribution over the Baselines}
+\label{sec:setup-shap}
+
+The neural baselines carry the comparison for explanation as well as for
+detection, so each trained autoencoder is also explained. Attribution is
+computed with SHAP, using the gradient explainer because it supports the
+convolutional and attention architectures where the deep explainer's layer
+rules do not cover every operation, and the quantity explained is the
+reconstruction error the detector thresholds. The explainer is given fifty
+fault-free windows as its background distribution, and the attributions are
+summed over the time axis of each window and averaged over the windows of the
+fault, which leaves one magnitude per variable per anomaly class. That is the
+same shape the causal pipeline's attribution produces, so the two can be scored
+by one procedure.
+
+This is run on all three datasets over the same anomaly classes the causal
+pipeline is scored on: the three injected robot attacks, the twenty
+electrocardiogram records and the twenty plant faults. Each domain's loader
+reads its subsampling stride and its non-constant variable set from that
+domain's own causal cache, so the baselines see the matrix the causal pipeline
+saw. Without that the two families would be attributing over different
+variables and the comparison would not mean anything.
+
+That parity is exact against PCMCI and against PCMCI alone. PCMCI derives its
+stride from the frequency content of each signal, and the loaders inherit it.
+CAM-UV and GES fix their stride at ten whatever the signal, so they read a
+different number of rows in every domain, and on the plant they see a tenth of
+what the baselines see. Comparisons involving those two are therefore between
+methods that did not observe the same data, which is stated here because
+Section~\ref{sec:attribution} draws conclusions from them. On the plant the
+faulty files are also trimmed to the post-onset window before attribution, as
+the causal pipeline does, since the fault is injected 160 samples in and the
+earlier samples are fault-free.
+
+Two properties of the method bear on how its output is read. The background
+sample is drawn at random, so the explainer is seeded, and the instability that
+remains across seeds is reported in Section~\ref{sec:attribution} instead of
+being suppressed. And the magnitudes arrive in the units of the input, which
+makes them incomparable between panels until each is normalised by its own
+total; Section~\ref{sec:attribution} does that before any figure is read across
+architectures.
+
+\subsection{The Trivial Control}
+\label{sec:trivial-control}
+To establish an absolute performance floor, a trivial statistical control was evaluated alongside the deep learning baselines. This parameter-free baseline simply calculates the mean absolute $z$-score of the input window, standardised against the fault-free training mean and standard deviation, and applies the identical 95th-percentile decision rule. This control establishes the floor against which the computationally expensive causal and neural pipelines must justify themselves: an advantage over it is evidence of a genuine algorithmic capability, and its absence indicates that the faults were detectable by gross amplitude alone.
+
+\section{Evaluation Metrics}
+\label{sec:metrics}
+
+Detection performance is evaluated with the standard classification metrics derived from the confusion matrix (precision, recall and $F_1$) alongside the threshold-free AUC-ROC and AUC-PR. AUC-ROC is the primary metric throughout, because it evaluates the ordering of the anomaly scores across all thresholds and not the quality of one operating point. $F_1$ is reported at the fixed 95th-percentile threshold, and because that collapses the score distribution to a single cut, a configuration with the better AUC-ROC can return the worse $F_1$ if its score distribution happens to align unfavourably with that cut.
+
+AUC-PR is reported for completeness but cannot be compared across domains. Anomaly prevalence ranges from 0.5717 on Healthcare to 0.9524 on Industrial, as Table~\ref{tab:datasets} records, and AUC-PR depends directly on the positive rate~\cite{davis2006prroc}, so a cross-domain comparison on that metric would describe the datasets instead of the algorithms.
+
+Uncertainty over the single-run causal configurations is quantified with a moving-block bootstrap of 2000 draws~\cite{kunsch1989blockbootstrap}. Resampling contiguous blocks preserves the local dependence that an independent resample would destroy, and the block length is derived per series from its own length and is not fixed,
+\[
+  L = \max\!\left(2,\; \operatorname{round}\!\left(n^{1/3}\right)\right),
+\]
+with $n$ the number of scored samples. Each configuration is seeded from a CRC32 hash of its own output path, so intervals are reproducible without being identical across configurations.
+
+For a direct comparison between two configurations evaluated on the same samples the pipeline uses DeLong's test~\cite{delong1988comparing}, which operates on the difference of the two AUC estimates. It is more sensitive than inspecting whether two intervals overlap, and for a specific reason: the variance of the difference is $\mathrm{Var}(A_1) + \mathrm{Var}(A_2) - 2\,\mathrm{Cov}(A_1, A_2)$, so when two scores are positively correlated, as they are when computed on identical samples, the difference is known more precisely than either score alone. Two configurations whose intervals overlap substantially can therefore still be separable.
+
+Attribution is not scored per sample but per anomaly class, so neither of those instruments applies to it and a third is needed. Uncertainty on the attribution figures of Section~\ref{sec:attribution} comes from a cluster bootstrap over anomaly classes: 20{,}000 resamples, percentile interval, seeded once at the start of the run so the figures are reproducible. Whole classes are drawn with replacement and every cell belonging to a drawn class is carried with it, because the three regression variants of one algorithm on one fault are three correlated observations of one event and resampling them independently would return an interval too narrow to believe. Comparisons between two methods are made on the paired difference within each class, which removes the between-class variance that dominates here, some faults being easier to attribute than others for every method at once.
+
+That interval is reported as a descriptive range and is not the decision rule, because at these sample sizes it cannot state its own level. Whether a percentile interval excludes zero is related to whether the classes agree in sign, but only in one direction: unanimity implies exclusion and exclusion does not imply unanimity, so the probability $2^{1-n}$ that all $n$ classes fall on the same side of a symmetric null bounds such a rule's false-positive rate from below without fixing it. A lower bound is worth having where it is large, and useless where it is small.
+
+The decision rule is therefore an exact paired sign test on the class differences, with ties discarded. It has a level at every sample size, and its smallest attainable two-sided value on $n$ untied classes is exactly $2^{1-n}$ rather than merely at least that. The consequence is the binding constraint on two of the three domains. Those floors are the best a panel of that size can do, and ties push them higher still, since a tied class is discarded and the exponent runs on what survives. With the robot's three attack classes the smallest $p$ the design admits is therefore 0.25 at best, and with the plant's five documented actuators 0.0625 at best; in practice several of the plant's comparisons tie on three or four of their five classes and their real floor is 0.5 or 1. Neither panel reaches the 5\% level however large the observed difference, so neither is asked for a verdict. With the fourteen localisable cardiac classes the floor is $1.2 \times 10^{-4}$ before ties and no worse than $10^{-3}$ after them, so a verdict is available there whichever way the ties fall. The same arithmetic explains why the bootstrap bounds on the robot are worth nothing beyond description: with $3^3 = 27$ equally likely resamples the all-minimum draw carries $1/27 = 3.7\%$ of the mass, more than the 2.5\% the lower tail removes, so the reported interval is exactly the range of the three values.
+
+Multiplicity is controlled rather than ignored. Section~\ref{sec:method-attribution} fixes the top-three ranking as the depth at which every attribution result in this thesis is stated, so the primary family is the three comparisons at that depth within a domain and Holm's step-down correction is applied across them. The remaining three depths are exploratory; they are reported uncorrected, labelled as such, and tabulated in full as Table~\ref{tab:attr-paired-full} rather than omitted, because choosing which depth to show after seeing what each one says is the failure Section~\ref{sec:rel-evaluation} names as this field's fourth.

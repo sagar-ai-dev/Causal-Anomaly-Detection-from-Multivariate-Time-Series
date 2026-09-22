@@ -1,0 +1,104 @@
+%=======================================================================
+%  FIGURE -- what each discovery family uses to identify structure
+%
+%  Include from a chapter with:
+%      \begin{figure}[htbp]
+%        \centering
+%        \resizebox{\textwidth}{!}{\input{figures/discovery_paradigms}}
+%        \caption{...}
+%        \label{fig:paradigms}
+%      \end{figure}
+%
+%  main.tex already loads tikz with arrows.meta, positioning, fit,
+%  backgrounds and calc, which is everything this figure uses.
+%
+%  The point the figure has to make: the three algorithms are not three
+%  implementations of one idea. Each rests on a different assumption about
+%  what makes structure recoverable from observation alone -- conditional
+%  independence, a penalised score over equivalence classes, and the
+%  functional form of the mechanism. That is why a result holding across
+%  all three says something about causal discovery rather than about one
+%  estimator, and it is the argument of Section 2.4.
+%
+%  LAYOUT NOTE, because this figure has been wrong twice.
+%
+%  The caption block under each panel was first placed at a fixed
+%  coordinate. Centred on it, a three-line block grew upward into the
+%  diagram and printed on top of it: "residuals not independent" and
+%  "functional model" came out overlaid as "resfunctionalmodelent" in the
+%  compiled PDF. Anchoring the block at its top edge helped but still
+%  relied on my guessing how tall the rows above it would render, which is
+%  not something to guess at without a compiler to check against.
+%
+%  Each panel's diagram now sits in its own inner scope with a local
+%  bounding box, and the caption is placed below that box with
+%  positioning's `below=of`. TikZ then computes the clearance from what
+%  actually rendered rather than from an estimate, so no combination of
+%  font, text width or line count can make the two collide.
+%=======================================================================
+\begin{tikzpicture}[
+  font=\small,
+  v/.style={circle, draw=black!65, fill=black!4, minimum size=6.5mm, inner sep=0pt,
+            font=\footnotesize},
+  hid/.style={circle, draw=black!45, dashed, fill=none, minimum size=6.5mm,
+              inner sep=0pt, font=\footnotesize, text=black!55},
+  e/.style={-{Stealth[length=1.8mm]}, draw=black!70},
+  und/.style={draw=black!70},
+  bi/.style={{Stealth[length=1.8mm]}-{Stealth[length=1.8mm]}, draw=black!45, dashed},
+  ttl/.style={font=\small\bfseries, align=center},
+  sub/.style={font=\scriptsize\itshape, text=black!60, align=center, text width=38mm},
+  panel/.style={draw=black!25, rounded corners=2pt, inner sep=3mm}
+]
+
+% ================================================= 1. constraint-based (PCMCI)
+\begin{scope}[local bounding box=p1]
+  \begin{scope}[local bounding box=d1]
+    \node[ttl] (t1) at (0, 1.85) {PCMCI};
+    \node[v] (x1) at (-1.05, 0.75) {$X$};
+    \node[v] (y1) at ( 0.00, 0.75) {$Y$};
+    \node[v] (z1) at ( 1.05, 0.75) {$Z$};
+    \draw[e] (x1) -- (y1);
+    \draw[e] (y1) -- (z1);
+    \draw[e, bend left=38, draw=black!25, densely dotted] (x1) to (z1);
+    \node[font=\scriptsize, text=black!55] at (0, 1.42) {$X \perp\!\!\!\perp Z \mid Y$};
+  \end{scope}
+  \node[sub, below=3mm of d1]
+    {\textbf{constraint-based}\\ an edge survives only if the two variables stay
+     dependent after conditioning on the rest};
+\end{scope}
+
+% ===================================================== 2. score-based (GES)
+\begin{scope}[shift={(5.0, 0)}, local bounding box=p2]
+  \begin{scope}[local bounding box=d2]
+    \node[ttl] (t2) at (0, 1.85) {GES};
+    \node[v] (a2) at (-1.05, 0.95) {$A$};
+    \node[v] (b2) at ( 0.00, 0.95) {$B$};
+    \node[v] (c2) at ( 1.05, 0.95) {$C$};
+    \draw[und] (a2) -- (b2);
+    \draw[e]   (b2) -- (c2);
+    \node[font=\scriptsize, text=black!55] at (0, 1.45) {CPDAG};
+    \node[font=\scriptsize, text=black!55] at (-0.52, 0.45) {kept?};
+    \node[font=\scriptsize, text=black!55] at ( 0.52, 0.45) {kept};
+  \end{scope}
+  \node[sub, below=3mm of d2]
+    {\textbf{score-based}\\ a penalised likelihood is optimised over equivalence
+     classes; unoriented edges are discarded};
+\end{scope}
+
+% ============================================ 3. functional causal model (CAM-UV)
+\begin{scope}[shift={(10.0, 0)}, local bounding box=p3]
+  \begin{scope}[local bounding box=d3]
+    \node[ttl] (t3) at (0, 1.85) {CAM-UV};
+    \node[hid] (u3) at ( 0.00, 1.30) {$U$};
+    \node[v]   (p3n) at (-1.05, 0.55) {$P$};
+    \node[v]   (q3n) at ( 1.05, 0.55) {$Q$};
+    \draw[bi] (u3) -- (p3n);
+    \draw[bi] (u3) -- (q3n);
+    \node[font=\scriptsize, text=black!55] at (0, 0.05) {residuals not independent};
+  \end{scope}
+  \node[sub, below=3mm of d3]
+    {\textbf{functional model}\\ nonlinear mechanisms with additive noise; pairs failing
+     an HSIC test enter the latent set $U$};
+\end{scope}
+
+\end{tikzpicture}

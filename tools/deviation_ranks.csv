@@ -1,0 +1,17 @@
+Fault,Variable,Rank,Mean abs z,Variables ranked,Satisfies requirement
+WheelsControl,WheelFLStiff,1,7.2222,249,
+WheelsControl,RElbowYawStiff,2,3.6714,249,
+WheelsControl,RShoulderPitchStiff,3,3.6463,249,
+WheelsControl,RShoulderRollStiff,4,3.4348,249,
+WheelsControl,RElbowRollStiff,5,3.2812,249,
+JointControl,RShoulderPitch,1,1.8511,249,no
+JointControl,LaserVeR01X,2,1.5677,249,no
+JointControl,LShoulderRoll,3,1.2846,249,no
+JointControl,KneePicthTemp,4,1.0588,249,yes
+JointControl,SonarB,5,1.0147,249,no
+LedsControl,LedEarR8,1,4.1994,249,no
+LedsControl,LedEarL8,2,4.1994,249,no
+LedsControl,LedEarL3,3,4.1895,249,no
+LedsControl,LedEarR3,4,4.1895,249,no
+LedsControl,LedEarR5,5,3.8058,249,no
+LedsControl,TabletTouchX,78,1.3112,249,yes

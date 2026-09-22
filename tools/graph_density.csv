@@ -1,0 +1,10 @@
+Folder,Cache,Variables,Lags,Multiplier,Pairs,Linked significance only,Linked pipeline rule,Density
+CAM_UV_healthcare,CAM-UV/CAM_UV_healthcare/Healthcare dataset/healthcare_normal_camuv_integrate_a0.05.npz,12,2,1.0,66,48,48,0.7273
+CAM_UV_industrial,CAM-UV/CAM_UV_industrial/TEP/tep_normal_camuv_integrate_a0.05.npz,52,2,0.0,1326,49,49,0.0370
+CAM_UV_robotics,CAM-UV/CAM_UV_robotics/pepper_csv/pepper_normal_camuv_integrate_a0.05.npz,35,2,1.0,595,480,480,0.8067
+GES_healthcare,GES/GES_healthcare/Healthcare dataset/healthcare_normal_ges.npz,12,2,1.0,66,34,34,0.5152
+GES_industrial,GES/GES_industrial/TEP/tep_normal.npz,52,2,0.0,1326,42,42,0.0317
+GES_robotic,GES/GES_robotic/pepper_csv/pepper_normal_ges.npz,35,2,1.0,595,65,65,0.1092
+PCMCI_healthcare,PCMCI/PCMCI_healthcare/Healthcare dataset/healthcare_normal.npz,12,4,1.0,66,66,63,0.9545
+PCMCI_industrial,PCMCI/PCMCI_industrial/TEP/tep_normal.npz,52,4,0.0,1326,511,511,0.3854
+PCMCI_robotic,PCMCI/PCMCI_robotic/pepper_csv/pepper_normal.npz,244,3,1.0,29646,18958,18958,0.6395

@@ -1,0 +1,10 @@
+Folder,Variables,Lag slots allocated,Lag slots occupied,Occupied lags,Pairs,Linked over all lags,Density over all lags,Linked at lag zero,Density at lag zero
+PCMCI_healthcare,12,4,4,0 1 2 3,66,63,0.9545,60,0.9091
+GES_healthcare,12,2,1,1,66,34,0.5152,0,0.0000
+CAM_UV_healthcare,12,2,1,1,66,48,0.7273,0,0.0000
+PCMCI_robotic,244,3,3,0 1 2,29646,18958,0.6395,10267,0.3463
+GES_robotic,35,2,1,0,595,65,0.1092,65,0.1092
+CAM_UV_robotics,35,2,1,1,595,480,0.8067,0,0.0000
+PCMCI_industrial,52,4,4,0 1 2 3,1326,511,0.3854,171,0.1290
+GES_industrial,52,2,1,1,1326,42,0.0317,0,0.0000
+CAM_UV_industrial,52,2,1,1,1326,49,0.0370,0,0.0000

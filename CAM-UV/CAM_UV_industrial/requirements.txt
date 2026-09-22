@@ -1,0 +1,21 @@
+# Versions verified against the environment that produced the results in FINAL_RESULTS.md.
+numpy==2.5.2
+pandas==3.0.5
+scipy==1.18.0
+matplotlib==3.11.1
+scikit-learn==1.9.0
+
+# --- TS-CAM-UV engine -------------------------------------------------------------------
+# The authentic CAM-UV implementation (Maeda & Shimizu, UAI 2021) ships inside `lingam`,
+# written by the paper's own authors. `pygam` is its GAM-fitting backend.
+#
+# INSTALL BOTH WITH --no-deps:
+#
+#     python -m pip install --no-deps lingam==1.13.0 pygam==0.12.0
+#
+# `lingam` pins scipy<=1.13.1 and `pygam` pins scipy<1.17, but this project is locked to
+# scipy 1.18.0 -- the version that produced every published PCMCI, GES and CAM-UV result.
+# Honouring those pins would downgrade scipy and silently invalidate all nine result folders.
+# Both packages were verified to function correctly on scipy 1.18.0.
+lingam==1.13.0
+pygam==0.12.0

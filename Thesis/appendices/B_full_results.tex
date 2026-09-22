@@ -1,0 +1,431 @@
+%=======================================================================
+%  APPENDIX B -- COMPLETE RESULTS
+%
+%  The per-domain tables carry the full confusion matrix for every one of
+%  the 27 configurations. Chapter 6 shows only AUC-ROC to stay readable;
+%  this appendix is where a reader checks that nothing was selected to
+%  flatter the argument. Every table here is GENERATED from the pipeline
+%  CSVs by Thesis/tools/make_tables.py.
+%=======================================================================
+\chapter{Complete Results}
+\label{app:full-results}
+
+\section{Detection Metrics by Domain}
+
+The complete confusion matrix, accuracy, precision, recall, $F_1$ and AUC-ROC for each of the 27 configurations are given in Chapter~\ref{ch:results}: Table~\ref{tab:detail-robotic} for robotics, Table~\ref{tab:detail-healthcare} for healthcare and Table~\ref{tab:detail-industrial} for industrial. They are not reproduced here, since the discussion of the divergence between $F_1$ and AUC-ROC in that chapter depends on having them alongside it.
+
+\section{Bootstrap Confidence Intervals}
+
+Chapter~\ref{ch:results} argues the uncertainty case from Figure~\ref{fig:forest}, which shows how far the 27 intervals overlap without asking the reader to compare bounds by eye. Table~\ref{tab:bootstrap} is the same estimates in numerical form, for when an exact bound is wanted. The analytical Hanley--McNeil interval is printed alongside each one: it is narrower almost everywhere, and the gap between the two columns is the cost of assuming the score series is independent when it is not.
+
+\input{tables/tbl_bootstrap}
+
+\section{Complete Attribution Rankings}
+
+Chapter~\ref{ch:results} states the robotics attribution result in a sentence and then leaves the per-fault rankings to this appendix. They are given twice over: first as the top-ranked variable for each of the three robotics attack classes, which is what the documented requirement is stated over, and then as the full top-three ranking for every attack class in every configuration and domain, so that the robotics result can be read against the whole set rather than in isolation. The ranking rule differs by domain and is defined in Section~\ref{sec:method-attribution}.
+
+\subsection{Top-ranked variable per robotics attack}
+
+Table~\ref{tab:attributions} ranks by the $L_2$ norm of the attack-window coefficient drift, the rule retained on robotics for parity with the reference implementation; the healthcare and industrial pipelines normalise by each variable's fault-free baseline instead.
+
+\input{tables/tbl_attributions}
+
+The attribution isolates the downstream tablet sensors for the \texttt{LedsControl} attack in 9 of 9 evaluated configurations, and recovers the thermal root cause of the mechanical \texttt{JointControl} attack in 8 of 9. The exception is the PCMCI polynomial variant, which attributes that anomaly to \texttt{WheelBStiff}, a wheel stiffness reading unrelated to the joint subsystem. This consensus is reached despite the algorithms generating entirely different graph structures and operating on different input dimensions.
+
+Why the attribution lands on the tablet and not on the LEDs deserves setting out, since this is
+the clearest case of the mechanism doing what it was built to do. For PCMCI the graph places the LED channels as parents of the tablet sensors. When the LED attack fires, the relationship predicting the tablet from the LEDs breaks, and the variable that becomes unpredictable is the child; the pipeline surfaces the downstream victim. For GES and CAM-UV the 35-variable variance cap excludes every LED channel, so those graphs cannot represent an LED-to-tablet relationship at all, and the tablet sensors still carry the largest attack-window coefficient drift. The ranking is not an artefact of the metric either: ordering by raw $L_2$ norm and by baseline-normalised RMS ratio both return \texttt{TabletTouchX} and \texttt{TabletTouchY} as the top two for this attack.
+
+That agreement does not extend to the other two faults, and the divergence justifies the per-domain choice of metric declared in Section~\ref{sec:method-attribution}. On the \texttt{JointControl} anomaly the raw $L_2$ norm returns \texttt{KneePicthTemp}, the joint temperature the documented requirement names, whereas the baseline-normalised ratio returns \texttt{LedEarR3} and \texttt{LedEarL3}. The reason is scale instead of physiology: those two channels carry the twelfth and thirteenth smallest fault-free baselines of 244 variables, at 0.0268, against \texttt{KneePicthTemp} at rank 238 and 7.5380. Dividing by a baseline that small confers a 281-fold advantage on two quiet sensors and displaces the correct attribution entirely.
+
+Neither rule dominates. On the \texttt{WheelsControl} attack the normalised ratio returns \texttt{WheelFRSpeed} and \texttt{WheelBSpeed}, which are arguably more apt than the raw norm's \texttt{WheelFRTemp} and \texttt{HeadPicthTemp}. The choice of attribution metric is load-bearing rather than cosmetic, and has to be made against the variance profile of the domain instead of adopted uniformly.
+
+\subsection{Robotics}
+
+Every robotics configuration against all three attack classes. The ranking is the raw $L_2$ norm of the attack-window drift, the rule retained on this domain for parity with the reference implementation.
+
+\input{tables/tbl_attr_full_robotic}
+
+\subsection{Healthcare}
+
+Every healthcare configuration against all twenty attack classes, ranked by the baseline-normalised RMS ratio rather than the raw norm.
+
+\input{tables/tbl_attr_full_healthcare}
+
+\subsection{Industrial}
+
+Every industrial configuration against all twenty fault classes, under the same baseline-normalised rule the healthcare tables use.
+
+\input{tables/tbl_attr_full_industrial}
+
+\section{Per-Configuration Attribution Plots}
+
+Figures~\ref{fig:pcmci-robotic-linear-ridge} to~\ref{fig:camuv-industrial-rbf-ridge} give one figure per configuration, showing the ranked attribution for each attack class in that domain. These are the graphical form of the tables above, included so that the relative magnitudes and not only the ordering are visible.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{pcmci_robotic_linear_ridge.png}
+  \caption[Attribution: PCMCI, Robotics, linear/ridge]{Top attributed variables per attack class. PCMCI, Robotics domain, linear/ridge.}
+  \label{fig:pcmci-robotic-linear-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{pcmci_robotic_polynomial_degree_3.png}
+  \caption[Attribution: PCMCI, Robotics, polynomial degree 3]{Top attributed variables per attack class. PCMCI, Robotics domain, polynomial degree 3.}
+  \label{fig:pcmci-robotic-polynomial-degree-3}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{pcmci_robotic_rbf_ridge.png}
+  \caption[Attribution: PCMCI, Robotics, RBF + ridge]{Top attributed variables per attack class. PCMCI, Robotics domain, RBF + ridge.}
+  \label{fig:pcmci-robotic-rbf-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{pcmci_healthcare_linear_ridge.png}
+  \caption[Attribution: PCMCI, Healthcare, linear/ridge]{Top attributed variables per attack class. PCMCI, Healthcare domain, linear/ridge.}
+  \label{fig:pcmci-healthcare-linear-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{pcmci_healthcare_polynomial_degree_3.png}
+  \caption[Attribution: PCMCI, Healthcare, polynomial degree 3]{Top attributed variables per attack class. PCMCI, Healthcare domain, polynomial degree 3.}
+  \label{fig:pcmci-healthcare-polynomial-degree-3}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{pcmci_healthcare_rbf_ridge.png}
+  \caption[Attribution: PCMCI, Healthcare, RBF + ridge]{Top attributed variables per attack class. PCMCI, Healthcare domain, RBF + ridge.}
+  \label{fig:pcmci-healthcare-rbf-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{pcmci_industrial_linear_ridge.png}
+  \caption[Attribution: PCMCI, Industrial, linear/ridge]{Top attributed variables per attack class. PCMCI, Industrial domain, linear/ridge.}
+  \label{fig:pcmci-industrial-linear-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{pcmci_industrial_polynomial_degree_3.png}
+  \caption[Attribution: PCMCI, Industrial, polynomial degree 3]{Top attributed variables per attack class. PCMCI, Industrial domain, polynomial degree 3.}
+  \label{fig:pcmci-industrial-polynomial-degree-3}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{pcmci_industrial_rbf_ridge.png}
+  \caption[Attribution: PCMCI, Industrial, RBF + ridge]{Top attributed variables per attack class. PCMCI, Industrial domain, RBF + ridge.}
+  \label{fig:pcmci-industrial-rbf-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{ges_robotic_linear_ridge.png}
+  \caption[Attribution: GES, Robotics, linear/ridge]{Top attributed variables per attack class. GES, Robotics domain, linear/ridge.}
+  \label{fig:ges-robotic-linear-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{ges_robotic_polynomial_degree_3.png}
+  \caption[Attribution: GES, Robotics, polynomial degree 3]{Top attributed variables per attack class. GES, Robotics domain, polynomial degree 3.}
+  \label{fig:ges-robotic-polynomial-degree-3}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{ges_robotic_rbf_ridge.png}
+  \caption[Attribution: GES, Robotics, RBF + ridge]{Top attributed variables per attack class. GES, Robotics domain, RBF + ridge.}
+  \label{fig:ges-robotic-rbf-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{ges_healthcare_linear_ridge.png}
+  \caption[Attribution: GES, Healthcare, linear/ridge]{Top attributed variables per attack class. GES, Healthcare domain, linear/ridge.}
+  \label{fig:ges-healthcare-linear-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{ges_healthcare_polynomial_degree_3.png}
+  \caption[Attribution: GES, Healthcare, polynomial degree 3]{Top attributed variables per attack class. GES, Healthcare domain, polynomial degree 3.}
+  \label{fig:ges-healthcare-polynomial-degree-3}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{ges_healthcare_rbf_ridge.png}
+  \caption[Attribution: GES, Healthcare, RBF + ridge]{Top attributed variables per attack class. GES, Healthcare domain, RBF + ridge.}
+  \label{fig:ges-healthcare-rbf-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{ges_industrial_linear_ridge.png}
+  \caption[Attribution: GES, Industrial, linear/ridge]{Top attributed variables per attack class. GES, Industrial domain, linear/ridge.}
+  \label{fig:ges-industrial-linear-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{ges_industrial_polynomial_degree_3.png}
+  \caption[Attribution: GES, Industrial, polynomial degree 3]{Top attributed variables per attack class. GES, Industrial domain, polynomial degree 3.}
+  \label{fig:ges-industrial-polynomial-degree-3}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{ges_industrial_rbf_ridge.png}
+  \caption[Attribution: GES, Industrial, RBF + ridge]{Top attributed variables per attack class. GES, Industrial domain, RBF + ridge.}
+  \label{fig:ges-industrial-rbf-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{camuv_robotics_linear_ridge.png}
+  \caption[Attribution: CAM-UV, Robotics, linear/ridge]{Top attributed variables per attack class. CAM-UV, Robotics domain, linear/ridge.}
+  \label{fig:camuv-robotics-linear-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{camuv_robotics_polynomial_degree_3.png}
+  \caption[Attribution: CAM-UV, Robotics, polynomial degree 3]{Top attributed variables per attack class. CAM-UV, Robotics domain, polynomial degree 3.}
+  \label{fig:camuv-robotics-polynomial-degree-3}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{camuv_robotics_rbf_ridge.png}
+  \caption[Attribution: CAM-UV, Robotics, RBF + ridge]{Top attributed variables per attack class. CAM-UV, Robotics domain, RBF + ridge.}
+  \label{fig:camuv-robotics-rbf-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{camuv_healthcare_linear_ridge.png}
+  \caption[Attribution: CAM-UV, Healthcare, linear/ridge]{Top attributed variables per attack class. CAM-UV, Healthcare domain, linear/ridge.}
+  \label{fig:camuv-healthcare-linear-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{camuv_healthcare_polynomial_degree_3.png}
+  \caption[Attribution: CAM-UV, Healthcare, polynomial degree 3]{Top attributed variables per attack class. CAM-UV, Healthcare domain, polynomial degree 3.}
+  \label{fig:camuv-healthcare-polynomial-degree-3}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{camuv_healthcare_rbf_ridge.png}
+  \caption[Attribution: CAM-UV, Healthcare, RBF + ridge]{Top attributed variables per attack class. CAM-UV, Healthcare domain, RBF + ridge.}
+  \label{fig:camuv-healthcare-rbf-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{camuv_industrial_linear_ridge.png}
+  \caption[Attribution: CAM-UV, Industrial, linear/ridge]{Top attributed variables per attack class. CAM-UV, Industrial domain, linear/ridge.}
+  \label{fig:camuv-industrial-linear-ridge}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{camuv_industrial_polynomial_degree_3.png}
+  \caption[Attribution: CAM-UV, Industrial, polynomial degree 3]{Top attributed variables per attack class. CAM-UV, Industrial domain, polynomial degree 3.}
+  \label{fig:camuv-industrial-polynomial-degree-3}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{camuv_industrial_rbf_ridge.png}
+  \caption[Attribution: CAM-UV, Industrial, RBF + ridge]{Top attributed variables per attack class. CAM-UV, Industrial domain, RBF + ridge.}
+  \label{fig:camuv-industrial-rbf-ridge}
+\end{figure}
+
+% Flush the per-configuration figures before the next section starts. They are
+% full-page floats, so without this LaTeX defers them past two section breaks and
+% prints them inside the baseline-attribution section they do not belong to.
+\clearpage
+
+\section{Paired AUC Comparisons}
+
+Every comparison DeLong's test can reach, all 54 of them. The 54 it cannot reach are the pairs in which PCMCI faces one of the other two algorithms, and they are absent for the reason set out in Section~\ref{sec:uncertainty} rather than because they were not attempted.
+
+\input{tables/tbl_delong_full}
+
+\section{Baseline Attribution Plots}
+
+Chapter~\ref{ch:results} reports the SHAP attributions through the relevance and consistency scores computed over them, and leaves the attributions themselves here. Table~\ref{tab:shap} gives the top-ranked variable each architecture returns for the three robotics attack classes, on the same faults as the causal attributions of Table~\ref{tab:attributions}.
+
+\input{tables/tbl_shap}
+
+SHAP returns a different top variable depending on which architecture it is asked to explain, recovering a tablet sensor for the TCN and the Transformer on the LED fault and failing on the LSTM. The drift-based attribution returns the same answer across three algorithms with three different graphs and two different variable sets, two of which do not model the attacked sensors at all. Figures~\ref{fig:shap-lstm-leds} to~\ref{fig:shap-transformer-leds} are the three \texttt{LedsControl} panels behind that row, which is where the contrast with the causal attribution is sharpest.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\textwidth]{baseline_shap_lstm_autoencoder_ledscontrol.png}
+  \caption{SHAP attribution for the LSTM autoencoder on the \texttt{LedsControl} fault.}
+  \label{fig:shap-lstm-leds}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\textwidth]{baseline_shap_tcn_autoencoder_ledscontrol.png}
+  \caption{SHAP attribution for the TCN autoencoder on the \texttt{LedsControl} fault.}
+  \label{fig:shap-tcn-leds}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\textwidth]{baseline_shap_transformer_autoencoder_ledscontrol.png}
+  \caption{SHAP attribution for the Transformer autoencoder on the \texttt{LedsControl} fault.}
+  \label{fig:shap-transformer-leds}
+\end{figure}
+
+The other two robotics faults follow, as Figures~\ref{fig:baseline-shap-lstm-autoencoder-jointcontrol} to~\ref{fig:baseline-shap-transformer-autoencoder-wheelscontrol}. The \texttt{JointControl} figures are the ones to read against Table~\ref{tab:deviation}: all three architectures return \texttt{RShoulderPitch}, which is the variable with the largest standardised deviation in the system and not the joint temperature the documented requirement names.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_shap_lstm_autoencoder_jointcontrol.png}
+  \caption[SHAP: LSTM, JointControl]{SHAP attribution for the LSTM autoencoder on the \texttt{JointControl} fault.}
+  \label{fig:baseline-shap-lstm-autoencoder-jointcontrol}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_shap_tcn_autoencoder_jointcontrol.png}
+  \caption[SHAP: TCN, JointControl]{SHAP attribution for the TCN autoencoder on the \texttt{JointControl} fault.}
+  \label{fig:baseline-shap-tcn-autoencoder-jointcontrol}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_shap_transformer_autoencoder_jointcontrol.png}
+  \caption[SHAP: Transformer, JointControl]{SHAP attribution for the Transformer autoencoder on the \texttt{JointControl} fault.}
+  \label{fig:baseline-shap-transformer-autoencoder-jointcontrol}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_shap_lstm_autoencoder_wheelscontrol.png}
+  \caption[SHAP: LSTM, WheelsControl]{SHAP attribution for the LSTM autoencoder on the \texttt{WheelsControl} fault.}
+  \label{fig:baseline-shap-lstm-autoencoder-wheelscontrol}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_shap_tcn_autoencoder_wheelscontrol.png}
+  \caption[SHAP: TCN, WheelsControl]{SHAP attribution for the TCN autoencoder on the \texttt{WheelsControl} fault.}
+  \label{fig:baseline-shap-tcn-autoencoder-wheelscontrol}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_shap_transformer_autoencoder_wheelscontrol.png}
+  \caption[SHAP: Transformer, WheelsControl]{SHAP attribution for the Transformer autoencoder on the \texttt{WheelsControl} fault.}
+  \label{fig:baseline-shap-transformer-autoencoder-wheelscontrol}
+\end{figure}
+
+The SHAP attributions for the other two domains are collected here. The explainer is run on all three datasets, as Section~\ref{sec:setup-shap} describes, and the relevance and consistency figures reported in Section~\ref{sec:attribution} are computed over every anomaly class in each. One class from each of the two non-robotics domains is plotted below as a representative panel, for each of the three architectures: Figures~\ref{fig:baseline-shap-lstm-attack1} to~\ref{fig:baseline-shap-transformer-fault1}. The electrocardiogram panels rank twelve leads and the plant panels rank fifty-two process variables, so the two are not on a common axis and are not meant to be read against one another; each is read against the causal attribution for the same domain. The same caution applies between the three architectures within one domain, for the reason Section~\ref{sec:shap-normalised} sets out: the explainer returns attributions in the units of the input, so the horizontal scale of a panel is fixed by what the model reads and not by how much of the record it explains. On the electrocardiogram class plotted here the largest attribution differs by more than two orders of magnitude between the widest panel and the narrowest. What is comparable across them is the ordering of the leads, not the width of the bars.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_shap_lstm_autoencoder_attack_1.png}
+  \caption[SHAP: LSTM, PTB-XL]{SHAP attribution for the LSTM autoencoder on record class \texttt{Attack\_1} of the electrocardiogram domain.}
+  \label{fig:baseline-shap-lstm-attack1}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_shap_tcn_autoencoder_attack_1.png}
+  \caption[SHAP: TCN, PTB-XL]{SHAP attribution for the TCN autoencoder on record class \texttt{Attack\_1} of the electrocardiogram domain.}
+  \label{fig:baseline-shap-tcn-attack1}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_shap_transformer_autoencoder_attack_1.png}
+  \caption[SHAP: Transformer, PTB-XL]{SHAP attribution for the Transformer autoencoder on record class \texttt{Attack\_1} of the electrocardiogram domain.}
+  \label{fig:baseline-shap-transformer-attack1}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_shap_lstm_autoencoder_fault_1.png}
+  \caption[SHAP: LSTM, TEP]{SHAP attribution for the LSTM autoencoder on \texttt{Fault\_1} of the Tennessee Eastman domain.}
+  \label{fig:baseline-shap-lstm-fault1}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_shap_tcn_autoencoder_fault_1.png}
+  \caption[SHAP: TCN, TEP]{SHAP attribution for the TCN autoencoder on \texttt{Fault\_1} of the Tennessee Eastman domain.}
+  \label{fig:baseline-shap-tcn-fault1}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_shap_transformer_autoencoder_fault_1.png}
+  \caption[SHAP: Transformer, TEP]{SHAP attribution for the Transformer autoencoder on \texttt{Fault\_1} of the Tennessee Eastman domain.}
+  \label{fig:baseline-shap-transformer-fault1}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.78\textheight,keepaspectratio]{baseline_lstm_autoencoder_top_anomalous_variables.png}
+  \caption[Reconstruction ranking: LSTM baseline]{Top anomalous variables per attack class for the LSTM autoencoder baseline, ranked by reconstruction error rather than by coefficient drift.}
+  \label{fig:baseline-lstm-top}
+\end{figure}
+
+
+Figure~\ref{fig:baseline-lstm-top} gives the neural baseline's own ranking of anomalous variables, by reconstruction error rather than by coefficient drift.
+
+\subsection{Normalising the SHAP Attributions}
+\label{sec:shap-normalised}
+
+The SHAP magnitudes plotted in Figures~\ref{fig:shap-lstm-leds}
+to~\ref{fig:shap-transformer-leds} are small in absolute terms, and that
+appearance is an artefact of the axis. GradientExplainer returns attributions in
+the units of the input, so the magnitude of a panel is fixed by whatever scale
+the sensors happen to be recorded in. Across the nine robot panels the largest
+attribution ranges from 0.22 to 227.26, which is three orders of magnitude of
+sensor scaling and not three orders of magnitude of explanation.
+
+Normalising each panel by its own total attribution removes the scale and leaves
+the share of the explanation that a variable carries, which is comparable across
+architectures and faults. Figure~\ref{fig:shap-normalised} shows the LED fault on
+that scale. The reference line is the 0.41\% a variable would receive if
+the model spread attribution evenly over all 244 sensors. The top variable
+carries between 2.3 and 68.2\% depending on the architecture, so the
+attributions concentrate between 6 and 166 times more than an even spread. The
+TCN is the extreme case, placing 95.9\% of its attribution on the top
+three variables, while the LSTM places 6.3\% there and spreads the rest
+almost flat. Read on the normalised scale the SHAP values are not small, and the
+architectures differ from each other far more than the raw plots suggest.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{baseline_shap_normalised_ledscontrol.png}
+  \caption[Normalised SHAP attribution for the \texttt{LedsControl} fault across the three neural architectures, on a common logarithmic scale]{Normalised SHAP attribution for the \texttt{LedsControl} fault across
+  the three neural architectures, on a common logarithmic scale. Each bar is the
+  share of that panel's total attribution. Blue marks a LED or tablet variable.
+  The dashed line is the 0.41\% an evenly spreading model would assign.}
+  \label{fig:shap-normalised}
+\end{figure}
+
+\section{Every Paired Attribution Comparison}
+\label{app:attr-paired-full}
+
+Chapter~\ref{ch:results} reports the paired attribution comparison at the top-three depth, which Section~\ref{sec:method-attribution} fixes as the depth every attribution result in this thesis is stated at. The other three depths are exploratory, and they are given here in full rather than summarised, because the alternative is to choose which of four depths to show after seeing what each one says.
+
+One of them reverses the ordering. That reversal is why this table exists. At ten variables on the electrocardiogram GES leads SHAP by 9.0 points with thirteen of the fourteen classes behind it, which is a wider margin and a more lopsided split than either result reported in the chapter. It is marked degenerate and discounted for the reason Section~\ref{sec:attribution} gives: GES ranks nine of the twelve leads, so a request for the top ten returns all nine it has, its relevance is then the share of its own pool that is relevant, and that is its chance rate by construction. Its lift at that depth is 1.00 exactly. A method that returns everything is not ranking, and a comparison against it measures the pool rather than the explanation.
+
+\input{tables/tbl_attr_paired_full}

@@ -1,0 +1,10 @@
+Domain,Algorithm,Modelled targets,Edges after sparsification,Targets hitting the cap,Percent of targets capped,Edges used,Edges discarded by the cap,Percent of edges discarded,Mean parents before cap,Mean parents after cap
+Healthcare,PCMCI,12,149,12,100.0,36,113,75.8,12.42,3.00
+Healthcare,GES,9,34,7,77.8,25,9,26.5,3.78,2.78
+Healthcare,CAM-UV,12,87,10,83.3,36,51,58.6,7.25,3.00
+Robotics,PCMCI,244,40808,244,100.0,732,40076,98.2,167.25,3.00
+Robotics,GES,32,65,0,0.0,65,0,0.0,2.03,2.03
+Robotics,CAM-UV,35,960,33,94.3,101,859,89.5,27.43,2.89
+Industrial,PCMCI,52,1108,52,100.0,156,952,85.9,21.31,3.00
+Industrial,GES,25,42,1,4.0,41,1,2.4,1.68,1.64
+Industrial,CAM-UV,39,63,2,5.1,60,3,4.8,1.62,1.54

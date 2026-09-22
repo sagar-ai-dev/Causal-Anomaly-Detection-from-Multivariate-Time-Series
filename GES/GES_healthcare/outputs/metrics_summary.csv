@@ -1,0 +1,4 @@
+Dataset,Model,Model Variant,Threshold,TP,FP,TN,FN,Accuracy,Precision,Recall,F1,AUC_ROC,AUC_PR
+Healthcare (ECG),GES,Linear / Ridge,0.032799,711,73,1382,949,0.6719,0.9069,0.4283,0.5818,0.8114,0.8395
+Healthcare (ECG),GES,Polynomial degree 3,0.056999,440,73,1382,1220,0.5849,0.8577,0.2651,0.4050,0.7867,0.8027
+Healthcare (ECG),GES,RBF + Ridge,0.043934,602,73,1382,1058,0.6369,0.8919,0.3627,0.5156,0.7620,0.8073

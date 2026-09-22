@@ -1,0 +1,4 @@
+Fault,Raw L2 top 1,Raw L2 top 2,Normalised RMS top 1,Normalised RMS top 2,Top two agree,Top three overlap
+JointControl.csv,KneePicthTemp,WheelBTemp,LedEarR3,LedEarL3,no,0
+LedsControl.csv,TabletTouchX,TabletTouchY,TabletTouchX,TabletTouchY,yes,2
+WheelsControl.csv,WheelFRTemp,HeadPicthTemp,WheelFRSpeed,WheelBSpeed,no,0

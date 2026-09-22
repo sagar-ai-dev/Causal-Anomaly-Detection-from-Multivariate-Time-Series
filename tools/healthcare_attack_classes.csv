@@ -1,0 +1,21 @@
+attack,ptbxl_record,ecg_id,age,sex,scp_codes,superclasses,diagnoses
+Attack_1,00008_lr,8,48.0,0,ABQRS|IMI|SR,MI,inferior myocardial infarction; abnormal QRS; sinus rhythm
+Attack_2,00017_lr,17,56.0,0,ABQRS|AFIB|AFLT,,atrial flutter; abnormal QRS; atrial fibrillation
+Attack_3,00018_lr,18,56.0,0,AFLT,,atrial flutter
+Attack_4,00020_lr,20,56.0,0,ABQRS|AFLT,,atrial flutter; abnormal QRS
+Attack_5,00022_lr,22,17.0,1,NDT|SR,STTC,non-diagnostic T abnormalities; sinus rhythm
+Attack_6,00023_lr,23,56.0,0,AFLT,,atrial flutter
+Attack_7,00026_lr,26,56.0,0,DIG|NST_|SR,STTC,non-specific ST changes; digitalis-effect; sinus rhythm
+Attack_8,00028_lr,28,56.0,0,DIG|NST_|SR,STTC,non-specific ST changes; digitalis-effect; sinus rhythm
+Attack_9,00030_lr,30,25.0,0,LVH|SR,HYP,left ventricular hypertrophy; sinus rhythm
+Attack_10,00032_lr,32,18.0,0,LPFB|SR,CD,left posterior fascicular block; sinus rhythm
+Attack_11,00034_lr,34,56.0,0,AFLT,,atrial flutter
+Attack_12,00039_lr,39,56.0,0,ABQRS|DIG|IMI|LNGQT|NST_|SR,MI|STTC,inferior myocardial infarction; long QT-interval; non-specific ST changes; digitalis-effect; abnormal QRS; sinus rhythm
+Attack_13,00041_lr,41,42.0,0,LAFB|SR,CD,left anterior fascicular block; sinus rhythm
+Attack_14,00045_lr,45,51.0,0,IRBBB|RAO/RAE|RVH|SR,CD|HYP,incomplete right bundle branch block; right atrial overload/enlargement; right ventricular hypertrophy; sinus rhythm
+Attack_15,00048_lr,48,23.0,1,NDT|SR,STTC,non-diagnostic T abnormalities; sinus rhythm
+Attack_16,00049_lr,49,23.0,0,IVCD|SR,CD,non-specific intraventricular conduction disturbance (block); sinus rhythm
+Attack_17,00050_lr,50,59.0,1,IVCD|LMI|SR,CD|MI,lateral myocardial infarction; non-specific intraventricular conduction disturbance (block); sinus rhythm
+Attack_18,00052_lr,52,35.0,0,IRBBB|SR,CD,incomplete right bundle branch block; sinus rhythm
+Attack_19,00054_lr,54,55.0,0,NDT|SR,STTC,non-diagnostic T abnormalities; sinus rhythm
+Attack_20,00063_lr,63,30.0,0,ABQRS|ASMI|SR,MI,anteroseptal myocardial infarction; abnormal QRS; sinus rhythm

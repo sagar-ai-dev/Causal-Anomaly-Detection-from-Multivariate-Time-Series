@@ -1,0 +1,19 @@
+%% The confounder analysis is specific to CAM-UV, which is why it sits here
+%%, not in the results chapter.
+\chapter{Latent Confounders under CAM-UV}
+\label{app:confounders}
+
+\section{Saturation of the confounder set}
+\label{sec:confounders}
+
+CAM-UV takes the highest score in no domain, placing second on robotics and healthcare and third on industrial, and this appendix accounts for that placing instead of simply recording it. Alone among the three it returns a second output beside the parent set: $U$, the pairs of variables it attributes to an unobserved common cause. Because the downstream regressor cannot condition on an unmeasured signal, every pair in $U$ is written into the graph as a dependency in its own right, so what $U$ contains determines what CAM-UV hands the detector. Table~\ref{tab:confounder} reports that content across the three domains, whose sample budgets differ by three orders of magnitude.
+
+\input{tables/tbl_confounder}
+
+First, on Robotics the latent confounder set $U$ is not empty; it is overactive. It flags 480 pairs, a saturation of 80.7\%, and leaves zero observed-parent edges: every edge in the graph is a confounded pair. A method that declares four pairs in five confounded has not discovered structure, it has returned a near-complete graph, and the detector downstream inherits no useful sparsity.
+
+Second, saturation tracks detection performance inversely and monotonically. Robotics is 80.7\% saturated and scores 0.6497; healthcare falls to 59.1\% and rises to 0.7861; industrial falls to 1.1\% and reaches 0.8428. This is the same relationship the graph density measurement of Section~\ref{sec:density} reports, and the agreement must not be banked as corroboration, because the two quantities are not independent. Density counts a pair as linked whenever the pipeline writes any edge between them, and every pair in $U$ is written into the graph, so $U$ is counted twice. On robotics the two are the same number: all 480 linked pairs are confounded ones. On healthcare 39 of the 48 linked pairs come from $U$, and on industrial 14 of 49. What the saturation column adds is therefore not a second vote but a decomposition: it says which part of CAM-UV's density is structure the method found and which part is structure it could not resolve, and the second part grows as the score falls.
+
+Third, the industrial row must not be read as success. Its 1.1\% saturation is not a sparse confounder structure discovered by the method; it is a consequence of having 0.67 samples per variable. CAM-UV flags a pair by rejecting independence of two residuals with an HSIC test, and at that sample size the test has insufficient power to reject anything. $|U| = 14$ is absence of evidence rather than evidence of absence.
+
+The synthetic ablation confirms that reading instead of merely excusing it. Given a system CAM-UV is specified for, recovery of the planted confounder depends monotonically on sample size: it never succeeds at 200 samples under any significance level, succeeds at 500 and 1000 only for $\alpha \geq 0.05$, and succeeds at every level tested by 1500. The lingam and causal-learn implementations agree exactly, recovering it in 14 of 24 configurations each. The industrial dataset supplies 35 samples. Its sparse confounder set is therefore the behaviour the ablation predicts, not a defect in the method.

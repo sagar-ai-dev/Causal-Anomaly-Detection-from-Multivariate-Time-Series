@@ -1,0 +1,100 @@
+%=======================================================================
+%  FIGURE -- how a coefficient drift score is computed
+%
+%  Include from a chapter with:
+%      \begin{figure}[htbp]
+%        \centering
+%        \resizebox{0.82\textwidth}{!}{\input{figures/drift_pipeline}}
+%        \caption{...}
+%        \label{fig:drift-pipeline}
+%      \end{figure}
+%
+%  Why this figure exists.
+%
+%  Equations 3.1 to 3.4 give the recursive least squares update: how one
+%  coefficient moves from one timestep to the next. They do not show the
+%  thing the detector is built on, which is that two passes are run over
+%  two disjoint windows and their coefficients are differenced. A reader
+%  can follow every equation in Chapter 3 and still not know that w^(0)
+%  comes from an offline fit on the training split while w(t) comes from
+%  an online pass over the evaluation split, nor that the ratio is taken
+%  per coefficient before the maximum is taken across them.
+%
+%  STYLE NAMES, because the first version of this figure would not
+%  compile. Every style below is prefixed `dp'. The first version named
+%  one of them `out', which is a reserved TikZ key -- it is the outgoing
+%  angle in `to[out=30,in=150]' -- so `\node[out, ...]' was read as the
+%  key /tikz/out with no value, and the rest of the picture unravelled
+%  from there. `in', `at', `to', `pos', `scale' and `shift' are reserved
+%  in the same way. A prefix costs nothing and rules the whole class of
+%  collisions out.
+%
+%  LAYOUT: placement is relative throughout, via positioning's below=of
+%  and right=of, so the boxes cannot overlap however the text inside them
+%  reflows.
+%=======================================================================
+\begin{tikzpicture}[
+  font=\small,
+  dpbox/.style={draw=black!45, rounded corners=2pt, align=center,
+                text width=54mm, inner sep=2.2mm, font=\footnotesize},
+  dpsrc/.style={dpbox, fill=black!4},
+  dpmid/.style={dpbox, text width=74mm},
+  dpend/.style={dpbox, text width=74mm, draw=black!65, very thick},
+  dparr/.style={-{Stealth[length=2mm]}, draw=black!60},
+  dplbl/.style={font=\scriptsize\itshape, text=black!60, inner sep=1pt},
+  node distance=7mm
+]
+
+% ---------------------------------------------- the two windows
+\node[dpsrc] (train) {\textbf{fault-free training window}\\ first 70\%
+  of the recording, no fault present};
+\node[dpsrc, right=14mm of train] (evalwin) {\textbf{evaluation window}\\ last 30
+ \%, containing the injected faults};
+
+% ---------------------------------------------- the two passes
+\node[dpbox, below=of train] (offline)
+  {\textbf{offline fit}\\ least squares over the whole window gives one baseline
+   coefficient vector per target\\[1mm] $\mathbf{w}^{(0)}_{v}$};
+\node[dpbox, below=of evalwin] (online)
+  {\textbf{online pass}\\ the RLS filter of Equations~\ref{eq:rls-gain}
+   to~\ref{eq:rls-cov} updates the coefficients at every
+   timestep\\[1mm] $\mathbf{w}_{v}(t)$\\[0.8mm]\scriptsize\itshape first 15 steps discarded as warm-up};
+
+\draw[dparr] (train) -- node[dplbl, right] {fit once} (offline);
+\draw[dparr] (evalwin) -- node[dplbl, right] {track continuously} (online);
+
+% ---------------------------------------------- the difference
+\coordinate (dpmerge) at ($(offline.south)!0.5!(online.south)$);
+\node[dpmid, below=11mm of dpmerge] (diff)
+  {\textbf{departure of one coefficient}\\[0.6mm]
+   $d_{v,k}(t) \;=\; w_{v,k}(t) \;-\; w^{(0)}_{v,k}$\\[0.6mm]
+   the modelled relationship has moved, not the signal};
+
+\draw[dparr] (offline) -- (diff);
+\draw[dparr] (online) -- (diff);
+
+
+% ---------------------------------------------- normalisation
+\node[dpmid, below=of diff] (norm)
+  {\textbf{divided by that same coefficient's own fault-free drift}\\[0.6mm]
+   $\bigl|d_{v,k}(t)\bigr| \;\big/\;
+    \kappa\,\bigl\lVert d^{\mathrm{base}}_{v,k}\bigr\rVert_2$\\[0.6mm]
+   which is what lets coefficients of different scale be compared};
+\draw[dparr] (diff) -- (norm);
+
+% ---------------------------------------------- the maximum
+\node[dpmid, below=of norm] (agg)
+  {\textbf{maximum over every coefficient of every target}\\[0.6mm]
+   $s(t) \;=\; \displaystyle\max_{v,\,k}$ of the ratio above\\[0.6mm]
+   one broken relationship is enough to raise the score};
+\draw[dparr] (norm) -- (agg);
+
+% ---------------------------------------------- the decision
+\node[dpend, below=of agg] (flag)
+  {\textbf{decision}\\[0.6mm]
+   the continuous $s(t)$ is what AUC-ROC is computed over; the reported
+   operating point flags a sample when $s(t)$ exceeds the 95th percentile
+   of the fault-free score distribution, fixed before any label is seen};
+\draw[dparr] (agg) -- (flag);
+
+\end{tikzpicture}

@@ -1,0 +1,159 @@
+"""
+Copy every generated figure into Thesis/figures under a LaTeX-safe name, and report drift.
+
+Until now this was done by hand, which has two failure modes and both had happened. Nine
+per-attack SHAP figures were generated and never copied, so the most informative baseline
+plots in the study were missing from the dissertation directory entirely. And nothing
+detected that four figures had been written at matplotlib's default resolution while the
+other twenty-nine were at 300 dpi.
+
+Two rules the names have to satisfy, and neither is optional:
+
+  no "+"        \\includegraphics treats it as part of the path in some engines and the
+                build fails with a missing-file error that names a file which is right
+                there. The pipeline writes "rbf_+_ridge"; the thesis needs "rbf_ridge".
+
+  unique        two folders both write "linear_ridge_top_anomalous_variables.png", so the
+                algorithm and domain have to survive into the name or one silently
+                overwrites the other.
+
+The mapping is therefore:
+
+    PCMCI/PCMCI_robotic/outputs/linear_ridge_top_anomalous_variables.png
+        -> pcmci_robotic_linear_ridge.png
+
+    Baselines/outputs/shap_tcn_autoencoder_ledscontrol.png
+        -> baseline_shap_tcn_autoencoder_ledscontrol.png
+
+Run with --check to verify without writing, which is what a build gate wants.
+
+Usage:  python tools/sync_figures.py
+        python tools/sync_figures.py --check
+"""
+
+import glob
+import hashlib
+import io
+import os
+import re
+import shutil
+import sys
+
+DEST = "Thesis/figures"
+MIN_PRINT_DPI = 150          # below this a figure is visibly soft on paper
+TEXT_WIDTH_IN = 6.3 * 0.9    # a4 textwidth at the 0.9 scale the templates use
+TEXT_HEIGHT_IN = 8.5         # usable height once caption and margins are taken
+
+
+def slug(s):
+    return re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", s.lower())).strip("_")
+
+
+def target_name(path):
+    parts = path.replace("\\", "/").split("/")
+    base = os.path.basename(path)[:-4]
+    if parts[0] == "Baselines":
+        return slug("baseline_" + base) + ".png"
+    folder = slug(parts[1].replace("CAM_UV", "camuv"))
+    variant = slug(re.sub(r"_top_anomalous_variables$", "", base))
+    return "%s_%s.png" % (folder, variant)
+
+
+def digest(path):
+    h = hashlib.sha256()
+    with io.open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def print_dpi(path):
+    """Effective dpi at the size the figure will actually be placed.
+
+    Dividing pixel width by the text width is only right for a figure placed at full width.
+    A figure taller than the text block cannot be -- it would run off the page, so it gets
+    scaled down by height instead, and scaling down *raises* effective dpi. Ignoring that
+    flags tall figures as soft when they will print perfectly well, which is a check that
+    cries wolf and then gets ignored.
+
+    So take whichever constraint binds first.
+    """
+    try:
+        from PIL import Image
+        with Image.open(path) as im:
+            w, h = im.size
+    except Exception:
+        return None
+    scale = min(TEXT_WIDTH_IN / w, TEXT_HEIGHT_IN / h)   # inches per pixel when placed
+    return 1.0 / scale if scale > 0 else None
+
+
+def main():
+    check = "--check" in sys.argv
+    root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    os.chdir(root)
+    if not os.path.isdir(DEST):
+        os.makedirs(DEST)
+
+    sources = sorted(glob.glob("*/*/outputs/*.png")) + sorted(glob.glob("Baselines/outputs/*.png"))
+    if not sources:
+        raise SystemExit("no generated figures found; run the pipelines first")
+
+    seen, copied, updated, same, soft = {}, [], [], [], []
+    for src in sources:
+        name = target_name(src)
+        if name in seen:
+            raise SystemExit("name collision: %s and %s both map to %s"
+                             % (seen[name], src, name))
+        seen[name] = src
+        dst = os.path.join(DEST, name)
+
+        dpi = print_dpi(src)
+        if dpi is not None and dpi < MIN_PRINT_DPI:
+            soft.append((name, dpi))
+
+        if not os.path.exists(dst):
+            copied.append(name)
+            if not check:
+                shutil.copy2(src, dst)
+        elif digest(src) != digest(dst):
+            updated.append(name)
+            if not check:
+                shutil.copy2(src, dst)
+        else:
+            same.append(name)
+
+    orphans = sorted(os.path.basename(p) for p in glob.glob(os.path.join(DEST, "*.png"))
+                     if os.path.basename(p) not in seen)
+
+    print("%d generated figures -> %s\n" % (len(sources), DEST))
+    for label, items in (("new", copied), ("changed", updated)):
+        if items:
+            print("  %s (%d):" % (label, len(items)))
+            for n in items:
+                print("    %s" % n)
+            print()
+    print("  unchanged: %d" % len(same))
+    if orphans:
+        print("\n  in %s but not generated by any pipeline (%d):" % (DEST, len(orphans)))
+        for n in orphans:
+            print("    %s" % n)
+        print("    These are stale or hand-made. Delete them or document where they came from.")
+    if soft:
+        print("\n  below %d dpi when placed to fit %.1f x %.1f in -- soft (%d):"
+              % (MIN_PRINT_DPI, TEXT_WIDTH_IN, TEXT_HEIGHT_IN, len(soft)))
+        for n, d in sorted(soft, key=lambda x: x[1]):
+            print("    %-52s %4.0f dpi" % (n, d))
+        print("    Pass dpi=300 to savefig in the script that writes these.")
+
+    if check:
+        problems = len(copied) + len(updated) + len(orphans) + len(soft)
+        print("\n%s" % ("figures are in sync and print-ready" if not problems
+                        else "%d figure problem(s); run without --check to copy" % problems))
+        return 1 if problems else 0
+    print("\ndone. %d in %s" % (len(seen), DEST))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

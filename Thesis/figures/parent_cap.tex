@@ -1,0 +1,87 @@
+%=======================================================================
+%  FIGURE -- how the three-parent cap selects a design matrix
+%
+%  Include from a chapter with:
+%      \begin{figure}[htbp]
+%        \centering
+%        \input{figures/parent_cap}
+%        \caption{...}
+%        \label{fig:parentcap-diagram}
+%      \end{figure}
+%
+%  Uses only tikz with arrows.meta, already loaded by main.tex. Every node
+%  is written out rather than generated in a loop, and there is no
+%  conditional or pgfmath in the body, so the figure cannot fail in a way
+%  that depends on how TikZ expands a loop variable.
+%
+%  The point: the cap is not a tie-break among near-equal candidates. It
+%  sorts the incoming edges by LAG and keeps the first three, so on a dense
+%  graph the parents reaching the regression are chosen by an ordering that
+%  carries no information about edge strength. The numbers are the measured
+%  healthcare PCMCI case from tools/parent_cap_bite.csv: 12.42 candidate
+%  parents per target on average, reduced to exactly 3.00.
+%
+%  The lag labels are the measured healthcare PCMCI case too, not a generic
+%  illustration: tools/parent_cap_lag.py finds that on Healthcare PCMCI's
+%  candidates are dominated by tau=0 (contemporaneous) edges, and that every
+%  one of the three the cap actually keeps is tau=0 -- not tau=1 as an
+%  earlier version of this figure showed. tau=4 is also not a value PCMCI
+%  can produce on Healthcare, where tau_max=3, so the dropped candidates
+%  are relabelled within range as well. See Section 3.1 and Section 4.3.
+%=======================================================================
+\begin{tikzpicture}[
+  font=\small,
+  keptn/.style={circle, draw=orange!70!black, line width=0.7pt, fill=orange!12,
+                minimum size=6.5mm, inner sep=0pt, font=\scriptsize},
+  dropn/.style={circle, draw=black!25, fill=none, minimum size=6.5mm, inner sep=0pt,
+                font=\scriptsize, text=black!35},
+  tgt/.style={rectangle, rounded corners=2pt, draw=black!70, fill=black!6,
+              minimum height=7.5mm, minimum width=13mm, font=\footnotesize},
+  e/.style={-{Stealth[length=1.7mm]}, draw=black!60},
+  eg/.style={-{Stealth[length=1.7mm]}, draw=black!18},
+  lbl/.style={font=\scriptsize, text=black!60, align=center},
+  hd/.style={font=\small\bfseries, align=center}
+]
+
+% ---------------------------------------------- left: what the graph supplies
+\node[hd]  at (-1.5,  2.45) {what the graph supplies};
+\node[lbl] at (-1.5,  2.05) {candidate parents, sorted by lag};
+
+\node[keptn] (c0) at (-1.5,  1.45) {$p_{1}$};
+\node[keptn] (c1) at (-1.5,  0.99) {$p_{2}$};
+\node[keptn] (c2) at (-1.5,  0.53) {$p_{3}$};
+\node[dropn] (c3) at (-1.5, -0.07) {$p_{4}$};
+\node[dropn] (c4) at (-1.5, -0.53) {$p_{5}$};
+\node[dropn] (c5) at (-1.5, -0.99) {$p_{6}$};
+
+\node[lbl] at (-2.45,  1.45) {$\tau{=}0$};
+\node[lbl] at (-2.45,  0.99) {$\tau{=}0$};
+\node[lbl] at (-2.45,  0.53) {$\tau{=}0$};
+\node[lbl] at (-2.45, -0.07) {$\tau{=}1$};
+\node[lbl] at (-2.45, -0.53) {$\tau{=}2$};
+\node[lbl] at (-2.45, -0.99) {$\tau{=}3$};
+
+\node[lbl] at (-1.5, -1.40) {$\vdots$};
+\node[lbl] at (-1.5, -1.90) {more candidates than the cap admits};
+
+% ---------------------------------------------- the cap
+\draw[dashed, draw=orange!70!black, line width=0.6pt] (-3.05, 0.23) -- (-0.30, 0.23);
+\node[lbl, text=orange!70!black, anchor=west] at (-0.22, 0.23) {cap: keep the first three};
+
+% ---------------------------------------------- right: the regression
+\node[tgt] (y) at (4.3, 0.30) {target $y$};
+
+\draw[e]  (c0) -- (y);
+\draw[e]  (c1) -- (y);
+\draw[e]  (c2) -- (y);
+\draw[eg] (c3) -- (y);
+\draw[eg] (c4) -- (y);
+\draw[eg] (c5) -- (y);
+
+\node[hd]  at (4.3,  2.45) {what the regression sees};
+\node[lbl] at (4.3,  2.05) {three columns plus an intercept};
+\node[lbl] at (4.3, -0.55) {$\hat{y}_t = w_0 + w_1 p_1 + w_2 p_2 + w_3 p_3$};
+\node[lbl, text=black!45] at (4.3, -1.55)
+  {identical width in all 27 configurations,\\ however dense the graph};
+
+\end{tikzpicture}

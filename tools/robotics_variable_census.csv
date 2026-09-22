@@ -1,0 +1,9 @@
+Quantity,Count
+Columns after dropping timestamp,255
+Non-constant at full rate,249
+Constant throughout recording,6
+Subsample rate,74
+Non-constant after subsampling,244
+Rendered constant by subsampling,5
+Duplicated sensor names,18
+Duplicated names with differing data,18

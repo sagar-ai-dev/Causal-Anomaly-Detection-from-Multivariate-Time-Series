@@ -1,0 +1,4 @@
+Dataset,Model,Model Variant,Threshold,TP,FP,TN,FN,Accuracy,Precision,Recall,F1,AUC_ROC,AUC_PR
+Industrial (TEP),TS-CAM-UV,Linear / Ridge,1.060622,962,4,59,298,0.7717,0.9959,0.7635,0.8643,0.8428,0.9917
+Industrial (TEP),TS-CAM-UV,Polynomial degree 3,2.578750,865,4,59,395,0.6984,0.9954,0.6865,0.8126,0.8212,0.9901
+Industrial (TEP),TS-CAM-UV,RBF + Ridge,3.036208,1001,4,59,259,0.8012,0.9960,0.7944,0.8839,0.8922,0.9944

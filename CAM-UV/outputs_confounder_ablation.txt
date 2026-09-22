@@ -1,0 +1,114 @@
+
+==============================================================================================
+ A proxy / linear-gaussian   -- correct confounded pair [1, 3]
+==============================================================================================
+impl             n  alpha  k  U recovered                 correct?  parents
+----------------------------------------------------------------------------------------------
+lingam         200   0.01  2  []                                no  2/4
+causallearn    200   0.01  2  []                                no  2/4
+lingam         200   0.01  3  []                                no  2/4
+causallearn    200   0.01  3  []                                no  2/4
+lingam         200   0.05  2  []                                no  2/4
+causallearn    200   0.05  2  []                                no  2/4
+lingam         200   0.05  3  []                                no  2/4
+causallearn    200   0.05  3  []                                no  2/4
+lingam         200   0.10  2  []                                no  2/4
+causallearn    200   0.10  2  []                                no  2/4
+lingam         200   0.10  3  []                                no  2/4
+causallearn    200   0.10  3  []                                no  2/4
+lingam         500   0.01  2  []                                no  3/4
+causallearn    500   0.01  2  []                                no  3/4
+lingam         500   0.01  3  []                                no  3/4
+causallearn    500   0.01  3  []                                no  3/4
+lingam         500   0.05  2  []                                no  3/4
+causallearn    500   0.05  2  []                                no  3/4
+lingam         500   0.05  3  []                                no  3/4
+causallearn    500   0.05  3  []                                no  3/4
+lingam         500   0.10  2  []                                no  3/4
+causallearn    500   0.10  2  []                                no  3/4
+lingam         500   0.10  3  []                                no  3/4
+causallearn    500   0.10  3  []                                no  3/4
+lingam        1000   0.01  2  []                                no  2/4
+causallearn   1000   0.01  2  []                                no  2/4
+lingam        1000   0.01  3  []                                no  2/4
+causallearn   1000   0.01  3  []                                no  2/4
+lingam        1000   0.05  2  []                                no  2/4
+causallearn   1000   0.05  2  []                                no  2/4
+lingam        1000   0.05  3  []                                no  2/4
+causallearn   1000   0.05  3  []                                no  2/4
+lingam        1000   0.10  2  []                                no  2/4
+causallearn   1000   0.10  2  []                                no  2/4
+lingam        1000   0.10  3  []                                no  2/4
+causallearn   1000   0.10  3  []                                no  2/4
+lingam        1500   0.01  2  []                                no  2/4
+causallearn   1500   0.01  2  []                                no  2/4
+lingam        1500   0.01  3  []                                no  2/4
+causallearn   1500   0.01  3  []                                no  2/4
+lingam        1500   0.05  2  []                                no  2/4
+causallearn   1500   0.05  2  []                                no  2/4
+lingam        1500   0.05  3  []                                no  2/4
+causallearn   1500   0.05  3  []                                no  2/4
+lingam        1500   0.10  2  []                                no  2/4
+causallearn   1500   0.10  2  []                                no  2/4
+lingam        1500   0.10  3  []                                no  2/4
+causallearn   1500   0.10  3  []                                no  2/4
+
+  lingam       recovered the planted confounder in 0/24 configurations
+  causallearn  recovered the planted confounder in 0/24 configurations
+
+==============================================================================================
+ B latent / nonlinear   -- correct confounded pair [2, 3]
+==============================================================================================
+impl             n  alpha  k  U recovered                 correct?  parents
+----------------------------------------------------------------------------------------------
+lingam         200   0.01  2  []                                no  3/4
+causallearn    200   0.01  2  []                                no  3/4
+lingam         200   0.01  3  []                                no  3/4
+causallearn    200   0.01  3  []                                no  3/4
+lingam         200   0.05  2  []                                no  3/4
+causallearn    200   0.05  2  []                                no  3/4
+lingam         200   0.05  3  []                                no  3/4
+causallearn    200   0.05  3  []                                no  3/4
+lingam         200   0.10  2  []                                no  3/4
+causallearn    200   0.10  2  []                                no  3/4
+lingam         200   0.10  3  []                                no  3/4
+causallearn    200   0.10  3  []                                no  3/4
+lingam         500   0.01  2  []                                no  3/4
+causallearn    500   0.01  2  []                                no  3/4
+lingam         500   0.01  3  []                                no  3/4
+causallearn    500   0.01  3  []                                no  3/4
+lingam         500   0.05  2  [[2, 3]]                         YES  4/4
+causallearn    500   0.05  2  [[2, 3]]                         YES  4/4
+lingam         500   0.05  3  [[2, 3]]                         YES  4/4
+causallearn    500   0.05  3  [[2, 3]]                         YES  4/4
+lingam         500   0.10  2  [[2, 3]]                         YES  4/4
+causallearn    500   0.10  2  [[2, 3]]                         YES  4/4
+lingam         500   0.10  3  [[2, 3]]                         YES  4/4
+causallearn    500   0.10  3  [[2, 3]]                         YES  4/4
+lingam        1000   0.01  2  []                                no  3/4
+causallearn   1000   0.01  2  []                                no  3/4
+lingam        1000   0.01  3  []                                no  3/4
+causallearn   1000   0.01  3  []                                no  3/4
+lingam        1000   0.05  2  [[1, 3], [2, 3]]                 YES  4/4
+causallearn   1000   0.05  2  [[1, 3], [2, 3]]                 YES  4/4
+lingam        1000   0.05  3  [[1, 3], [2, 3]]                 YES  4/4
+causallearn   1000   0.05  3  [[1, 3], [2, 3]]                 YES  4/4
+lingam        1000   0.10  2  [[1, 3], [2, 3]]                 YES  4/4
+causallearn   1000   0.10  2  [[1, 3], [2, 3]]                 YES  4/4
+lingam        1000   0.10  3  [[1, 3], [2, 3]]                 YES  4/4
+causallearn   1000   0.10  3  [[1, 3], [2, 3]]                 YES  4/4
+lingam        1500   0.01  2  [[2, 3]]                         YES  4/4
+causallearn   1500   0.01  2  [[2, 3]]                         YES  4/4
+lingam        1500   0.01  3  [[2, 3]]                         YES  4/4
+causallearn   1500   0.01  3  [[2, 3]]                         YES  4/4
+lingam        1500   0.05  2  [[2, 3]]                         YES  3/4
+causallearn   1500   0.05  2  [[2, 3]]                         YES  3/4
+lingam        1500   0.05  3  [[2, 3]]                         YES  3/4
+causallearn   1500   0.05  3  [[2, 3]]                         YES  3/4
+lingam        1500   0.10  2  [[2, 3]]                         YES  3/4
+causallearn   1500   0.10  2  [[2, 3]]                         YES  3/4
+lingam        1500   0.10  3  [[2, 3]]                         YES  3/4
+causallearn   1500   0.10  3  [[2, 3]]                         YES  3/4
+
+  lingam       recovered the planted confounder in 14/24 configurations
+  causallearn  recovered the planted confounder in 14/24 configurations

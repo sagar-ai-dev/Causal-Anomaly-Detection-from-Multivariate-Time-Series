@@ -1,0 +1,10 @@
+Dataset,Model Variant,Attribution,Fault Name,Top Variable 1,Top Variable 2,Top Variable 3
+Robotics (Pepper),LSTM Autoencoder,SHAP (post-hoc),WheelsControl.csv,WheelBSpeed,GyroscopeZ,WheelFRSpeed
+Robotics (Pepper),LSTM Autoencoder,SHAP (post-hoc),JointControl.csv,RShoulderPitch,SonarB,LShoulderPitch
+Robotics (Pepper),LSTM Autoencoder,SHAP (post-hoc),LedsControl.csv,LedFaceBR5,LedFaceBL4,LedFaceBR6
+Robotics (Pepper),TCN Autoencoder,SHAP (post-hoc),WheelsControl.csv,WheelBSpeed,GyroscopeZ,WheelFRSpeed
+Robotics (Pepper),TCN Autoencoder,SHAP (post-hoc),JointControl.csv,RShoulderPitch,LShoulderPitch,RShoulderRoll
+Robotics (Pepper),TCN Autoencoder,SHAP (post-hoc),LedsControl.csv,TabletTouchX,TabletTouchY,AccelerometerX
+Robotics (Pepper),Transformer Autoencoder,SHAP (post-hoc),WheelsControl.csv,WheelBSpeed,WheelFRSpeed,WheelFLSpeed
+Robotics (Pepper),Transformer Autoencoder,SHAP (post-hoc),JointControl.csv,RShoulderPitch,LShoulderPitch,RShoulderRoll
+Robotics (Pepper),Transformer Autoencoder,SHAP (post-hoc),LedsControl.csv,TabletTouchX,LedFaceBR5,LedFaceBL4

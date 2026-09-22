@@ -1,0 +1,4 @@
+Algorithm,Pairs,Linked 12-lead graph over 8 leads,Density 12-lead subset,Linked 8-lead graph,Density 8-lead,Mean AUC 12-lead,Mean AUC 8-lead,Mean AUC delta
+PCMCI,28,26,0.9286,26,0.9286,0.6134,0.6597,0.0462
+GES,28,15,0.5357,21,0.7500,0.7867,0.7325,-0.0542
+TS-CAM-UV,28,22,0.7857,28,1.0000,0.7748,0.7620,-0.0128

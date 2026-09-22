@@ -1,0 +1,4 @@
+Fault,Architecture,Seeds,Distinct top-1,Top-1 variables,Modal top-1,Modal agreement,Union of top-3
+WheelsControl.csv,LSTM Autoencoder,10,1,WheelBSpeed,WheelBSpeed,1.0000,4
+JointControl.csv,LSTM Autoencoder,10,1,RShoulderPitch,RShoulderPitch,1.0000,3
+LedsControl.csv,LSTM Autoencoder,10,1,LedFaceBR5,LedFaceBR5,1.0000,4

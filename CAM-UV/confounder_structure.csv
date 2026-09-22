@@ -1,0 +1,4 @@
+domain,d,n,spv,edges,pairs,conf_edges,conf_share,saturation,density,auc
+healthcare,12,3500,291.6667,87,39,78,0.8966,0.5909,0.6591,0.7861
+industrial,52,35,0.6731,63,14,28,0.4444,0.0106,0.0238,0.8428
+robotics,35,1415,40.4286,960,480,960,1.0000,0.8067,0.8067,0.6497

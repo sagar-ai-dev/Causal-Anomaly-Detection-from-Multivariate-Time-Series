@@ -1,0 +1,10 @@
+Domain,Algorithm,Lag slots (0..max),Edges after sparsification,Lag-0 edges pre-cap,Percent lag-0 pre-cap,Kept parent-slots,Kept parent-slots at lag 0,Percent of kept slots at lag 0
+Healthcare,PCMCI,3,149,120,80.5,36,36,100.0
+Healthcare,GES,1,34,0,0.0,25,0,0.0
+Healthcare,CAM-UV,1,87,0,0.0,36,0,0.0
+Robotics,PCMCI,2,40808,20534,50.3,732,732,100.0
+Robotics,GES,1,65,65,100.0,65,65,100.0
+Robotics,CAM-UV,1,960,0,0.0,101,0,0.0
+Industrial,PCMCI,3,1108,342,30.9,156,154,98.7
+Industrial,GES,1,42,0,0.0,41,0,0.0
+Industrial,CAM-UV,1,63,0,0.0,60,0,0.0
