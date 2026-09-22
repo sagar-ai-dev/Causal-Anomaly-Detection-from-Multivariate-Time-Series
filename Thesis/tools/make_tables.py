@@ -1493,7 +1493,8 @@ def t_consistency():
             (float(r["mean_jaccard"]), float(r["chance_jaccard"])))
     fams = [("causal", "Causal (9 configurations)"),
             ("neural", "SHAP (3 architectures)")]
-    lines = ["\\begin{table}[htbp]", "\\centering", "\\small"]
+    lines = ["\\begin{table}[htbp]", "\\centering", "\\footnotesize",
+             "\\setlength{\\tabcolsep}{3pt}"]
     lines += caption(
         "Cross-method agreement on the attributed variables, as the mean pairwise "
         "Jaccard index over the configurations of each family, beside the agreement two "
@@ -1563,7 +1564,8 @@ def t_relevance_healthcare():
             continue
         by.setdefault((r["group"], r["algorithm"]), []).append(
             (float(r["relevance_pct"]), float(r["chance_pct"])))
-    lines = ["\\begin{table}[htbp]", "\\centering", "\\small"]
+    lines = ["\\begin{table}[htbp]", "\\centering", "\\small",
+             "\\setlength{\\tabcolsep}{4pt}"]
     lines += caption(
         "Relevance of the top three attributed leads on the healthcare dataset, with the "
         "classes grouped into diagnostic families and not reported one record at a "

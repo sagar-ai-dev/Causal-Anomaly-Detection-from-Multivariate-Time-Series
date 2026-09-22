@@ -273,7 +273,7 @@ def appendix_a():
         "\\caption{Settings specific to individual algorithms and to the non-linear "
         "feature maps.}",
         "\\label{app:tab-algo}",
-        "\\begin{tabular}{lll}", "\\toprule",
+        "\\begin{tabular}{llp{7.2cm}}", "\\toprule",
         "Component & Parameter & Value \\\\", "\\midrule",
         "PCMCI & independence test & ParCorr \\\\",
         "PCMCI & $\\tau_{\\max}$ & derived per domain: 2, 3, 3 \\\\",
